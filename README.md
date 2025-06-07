@@ -1,8 +1,8 @@
 # ARIMAX Modeling for Time Series Forecasting with Statistical Significance & Cluster-Based Outlier Removal
 
-This repository contains the source code and analysis for my final college project (*Skripsi*) focusing on time series forecasting using an ARIMAX model, with a special emphasis on advanced data preprocessing techniques, including statistical feature selection and cluster-based outlier detection.
+This repository contains the source code and analysis for my final college project (*Skripsi*) focusing on time series analysis using an ARIMAX model, with a special emphasis on advanced data preprocessing techniques, including statistical feature selection and cluster-based outlier detection.
 
-The primary goal of this project is to build a robust forecasting model for a given time series dataset (e.g., PM2.5 air quality). The methodology ensures that the data is clean, relevant features are selected, and the final model is both statistically sound and accurate.
+The primary goal of this project is to build a robust model for a given time series dataset (e.g., PM2.5 air quality). The methodology ensures that the data is clean, relevant features are selected, and the final model is both statistically sound and accurate.
 
 ## 🚀 Live Application
 
@@ -31,11 +31,11 @@ A key innovation of this project is the use of K-Means clustering to identify an
 
 * **Determining Optimal `k`:**
     * **Elbow Method:** The Sum of Squared Errors (SSE) was calculated for a range of `k` values. The plot showed a significant "elbow" at **`k=2`**, indicating a dominant binary structure in the data.
-    * **Silhouette Score:** The average silhouette score was calculated for various `k` values, with the peak score occurring at **`k=7`**.
+    * **Silhouette Score:** The average silhouette score was calculated for various `k` values, with the peak score occurring at **`k=2`**.
 * **Decision:** After analyzing the trade-offs between variance explanation (Elbow) and cluster cohesion/separation (Silhouette), **`k=2`** was chosen for its clear structural significance and ease of interpretation.
 * **Outlier Removal:**
     * The `silhouette_samples` function was used to calculate a silhouette score for every individual data point within the `k=2` clustering result.
-    * Observations with a silhouette score below a set threshold (e.g., <= 0.0) were identified as outliers and removed from the dataset, resulting in a cleaner, more robust dataset for modeling.
+    * Observations with a silhouette score below a set threshold (e.g., data <= 0.0) were identified as outliers and removed from the dataset, resulting in a cleaner, more robust dataset for modeling.
 
 ### 4. Time Series Modeling with ARIMAX
 
