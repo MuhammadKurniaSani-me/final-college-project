@@ -105,7 +105,7 @@ def plot_missing_values_bar(df):
         palette=palette
     )
 
-    # Add data labels on top of each bar
+    # Add data labels on top of each 
     for p in barplot.patches:
         ax.annotate(
             format(p.get_height(), '.0f'),
@@ -319,5 +319,5 @@ plot_time_series(df, y_col='PM2.5')
 st.markdown("   ")
 plot_feature_distributions(df)
 st.markdown("   ")
-plot_scatter_relationships(df,'PM2.5', ['PM10', 'CO', 'NO2', 'SO2'])
+plot_scatter_relationships(df,'PM2.5', ['PM10'])
 st.markdown("   ")
