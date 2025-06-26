@@ -70,7 +70,7 @@ def fetch_and_clean_data(station_name):
 
     url_path = 'https://raw.githubusercontent.com/MuhammadKurniaSani-me/datasets/refs/heads/main/real-dataset/beijing-multi-site-air-quality-data/'
     # file_path = "./datas/locations/"
-    data = pd.read_csv(f'{file_path}PRSA_Data_{station_name}_20130301-20170228.csv')
+    data = pd.read_csv(f'{url_path}PRSA_Data_{station_name}_20130301-20170228.csv')
 
     return data
 
