@@ -719,24 +719,111 @@ def inverse_transform_predictions(scaled_predictions, scaler, all_feature_names,
     
     return original_scale_predictions
 
+# @st.cache_resource(show_spinner="Melatih model final pada seluruh data...")
+# def train_final_model_from_best_scenario(
+#     full_df, 
+#     use_fs, 
+#     use_or, 
+#     fs_params, 
+#     or_params
+# ):
+#     """
+#     Melatih satu model ARIMAX final pada seluruh dataset historis 
+#     berdasarkan skenario terbaik.
+#     """
+
+#     df = full_df.copy()
+    
+#     # --- PREPROCESSING (SCALING) ---
+#     # Asumsikan data sudah diimputasi. Kita akan scale di sini.
+#     # Fitur waktu sudah dihapus di tahap sebelumnya.
+#     df_scaled, scaler = preprocess_scale(df)
+
+#     # --- FEATURE SELECTION (JIKA DIPILIH) ---
+#     if use_fs:
+#         corr_matrix = df_scaled.corr(method='pearson')
+#         corr_with_target = corr_matrix['PM2.5'].abs().drop('PM2.5')
+#         features_passed_corr = corr_with_target[corr_with_target >= fs_params['corr_threshold']].index.tolist()
+        
+#         df_for_vif = df_scaled[features_passed_corr]
+#         vif_df = calculate_vif(df_for_vif)
+#         final_features = vif_df[vif_df['Skor VIF'] <= fs_params['vif_threshold']]['Fitur'].tolist()
+        
+#         df_processed = df_scaled[['PM2.5'] + final_features]
+#     else:
+#         df_processed = df_scaled
+#         final_features = df.drop(columns=['PM2.5']).columns.tolist()
+
+#     # --- OUTLIER REMOVAL (JIKA DIPILIH) ---
+#     if use_or:
+#         df_processed, _, _ = get_outliers_df(df_processed, k=or_params['k_optimal'], silhouette_threshold=or_params['sil_threshold'])
+
+#     # --- PELATIHAN MODEL FINAL ---
+#     endog = df_processed['PM2.5']
+#     exog = df_processed[final_features]
+    
+#     # Temukan order terbaik untuk seluruh data
+#     final_order = find_best_order_grid_search(endog, max_p=3, max_q=3)
+    
+#     # Latih model
+#     model = SARIMAX(endog, exog=exog, order=final_order)
+#     results = model.fit(disp=False)
+    
+#     # Kembalikan semua artefak penting
+#     return results, scaler, final_features, full_df.columns.tolist(), final_order
+
+# def predict_future_values(final_model, scaler, exog_input_df, final_features, original_cols, target_variable='PM2.5'):
+#     """
+#     Membuat prediksi masa depan dan mengembalikannya ke skala asli.
+#     Versi ini memperbaiki pembuatan DataFrame dummy untuk proses scaling.
+#     """
+    
+#     # --- PERBAIKAN LOGIKA UTAMA DI SINI ---
+
+#     # 1. Buat "cetakan" DataFrame yang benar.
+#     #    - Buat DataFrame berisi nol dengan SEMUA kolom asli dan indeks yang sama dengan input.
+#     #    - Ini memastikan urutan dan nama kolom sama persis seperti yang diharapkan scaler.
+#     template_df = pd.DataFrame(0, index=exog_input_df.index, columns=original_cols)
+
+#     # 2. "Tempelkan" nilai input dari pengguna ke dalam cetakan.
+#     #    Metode .update() akan mengisi nilai berdasarkan nama kolom yang cocok.
+#     template_df.update(exog_input_df)
+    
+#     # 3. Sekarang, 'template_df' siap untuk di-scale karena strukturnya sudah benar.
+#     scaled_array = scaler.transform(template_df)
+#     df_scaled = pd.DataFrame(scaled_array, columns=original_cols, index=template_df.index)
+    
+#     # --- AKHIR PERBAIKAN ---
+
+#     # 4. Ambil hanya kolom fitur yang relevan untuk prediksi
+#     exog_for_forecast = df_scaled[final_features]
+
+#     # 5. Buat prediksi (hasil masih dalam skala 0-1)
+#     forecast_result = final_model.get_forecast(steps=len(exog_for_forecast), exog=exog_for_forecast)
+#     forecast_mean_scaled = forecast_result.predicted_mean
+    
+#     # 6. Lakukan inverse transform untuk kembali ke skala asli
+#     original_predictions = inverse_transform_predictions(forecast_mean_scaled, scaler, original_cols, target_variable)
+    
+#     return original_predictions, forecast_mean_scaled
+
+# Ganti seluruh fungsi train_final_model_from_best_scenario dengan ini
 @st.cache_resource(show_spinner="Melatih model final pada seluruh data...")
 def train_final_model_from_best_scenario(
-    full_df, 
-    use_fs, 
-    use_or, 
-    fs_params, 
-    or_params
+    full_df_imputed, 
+    use_fs, use_or, 
+    fs_params, or_params
 ):
     """
-    Melatih satu model ARIMAX final pada seluruh dataset historis 
-    berdasarkan skenario terbaik.
+    Melatih satu model ARIMAX final pada seluruh dataset historis.
+    Versi ini menyimpan 'scaler' dan 'kolom' dengan lebih eksplisit.
     """
-
-    df = full_df.copy()
+    df = full_df_imputed.copy()
+    
+    # Simpan nama kolom sebelum diproses lebih lanjut
+    original_cols_for_scaling = df.columns.tolist()
     
     # --- PREPROCESSING (SCALING) ---
-    # Asumsikan data sudah diimputasi. Kita akan scale di sini.
-    # Fitur waktu sudah dihapus di tahap sebelumnya.
     df_scaled, scaler = preprocess_scale(df)
 
     # --- FEATURE SELECTION (JIKA DIPILIH) ---
@@ -744,11 +831,9 @@ def train_final_model_from_best_scenario(
         corr_matrix = df_scaled.corr(method='pearson')
         corr_with_target = corr_matrix['PM2.5'].abs().drop('PM2.5')
         features_passed_corr = corr_with_target[corr_with_target >= fs_params['corr_threshold']].index.tolist()
-        
         df_for_vif = df_scaled[features_passed_corr]
-        vif_df = calculate_vif(df_for_vif)
+        vif_df = calculate_vif(df_for_vif) if not df_for_vif.empty else pd.DataFrame(columns=['Fitur', 'Skor VIF'])
         final_features = vif_df[vif_df['Skor VIF'] <= fs_params['vif_threshold']]['Fitur'].tolist()
-        
         df_processed = df_scaled[['PM2.5'] + final_features]
     else:
         df_processed = df_scaled
@@ -762,47 +847,40 @@ def train_final_model_from_best_scenario(
     endog = df_processed['PM2.5']
     exog = df_processed[final_features]
     
-    # Temukan order terbaik untuk seluruh data
     final_order = find_best_order_grid_search(endog, max_p=3, max_q=3)
-    
-    # Latih model
     model = SARIMAX(endog, exog=exog, order=final_order)
     results = model.fit(disp=False)
     
     # Kembalikan semua artefak penting
-    return results, scaler, final_features, full_df.columns.tolist(), final_order
+    return results, scaler, final_features, original_cols_for_scaling, final_order
 
-def predict_future_values(final_model, scaler, exog_input_df, final_features, original_cols, target_variable='PM2.5'):
+# Ganti seluruh fungsi predict_future_values dengan ini
+def predict_future_values(final_model, scaler, exog_input_df, final_features, original_cols_for_scaler, target_variable='PM2.5'):
     """
-    Membuat prediksi masa depan dan mengembalikannya ke skala asli.
-    Versi ini memperbaiki pembuatan DataFrame dummy untuk proses scaling.
+    Membuat prediksi masa depan dan mengembalikannya ke skala asli (versi lebih robust).
     """
+    # 1. Buat DataFrame dengan struktur lengkap untuk di-scaling
+    #    Isi dengan nol, pastikan urutan kolom sama persis dengan saat scaler dilatih
+    prediction_template = pd.DataFrame(np.zeros((len(exog_input_df), len(original_cols_for_scaler))), 
+                                       columns=original_cols_for_scaler)
     
-    # --- PERBAIKAN LOGIKA UTAMA DI SINI ---
+    # 2. Isi nilai dari input pengguna ke kolom yang sesuai
+    for col in exog_input_df.columns:
+        if col in prediction_template.columns:
+            prediction_template[col] = exog_input_df[col].values
 
-    # 1. Buat "cetakan" DataFrame yang benar.
-    #    - Buat DataFrame berisi nol dengan SEMUA kolom asli dan indeks yang sama dengan input.
-    #    - Ini memastikan urutan dan nama kolom sama persis seperti yang diharapkan scaler.
-    template_df = pd.DataFrame(0, index=exog_input_df.index, columns=original_cols)
-
-    # 2. "Tempelkan" nilai input dari pengguna ke dalam cetakan.
-    #    Metode .update() akan mengisi nilai berdasarkan nama kolom yang cocok.
-    template_df.update(exog_input_df)
+    # 3. Scale seluruh template DataFrame
+    scaled_values = scaler.transform(prediction_template)
+    df_scaled = pd.DataFrame(scaled_values, columns=original_cols_for_scaler)
     
-    # 3. Sekarang, 'template_df' siap untuk di-scale karena strukturnya sudah benar.
-    scaled_array = scaler.transform(template_df)
-    df_scaled = pd.DataFrame(scaled_array, columns=original_cols, index=template_df.index)
-    
-    # --- AKHIR PERBAIKAN ---
-
-    # 4. Ambil hanya kolom fitur yang relevan untuk prediksi
+    # 4. Ambil kolom eksogen yang sudah di-scale untuk prediksi
     exog_for_forecast = df_scaled[final_features]
 
     # 5. Buat prediksi (hasil masih dalam skala 0-1)
     forecast_result = final_model.get_forecast(steps=len(exog_for_forecast), exog=exog_for_forecast)
     forecast_mean_scaled = forecast_result.predicted_mean
     
-    # 6. Lakukan inverse transform untuk kembali ke skala asli
-    original_predictions = inverse_transform_predictions(forecast_mean_scaled, scaler, original_cols, target_variable)
+    # 6. Lakukan inverse transform
+    original_predictions = inverse_transform_predictions(forecast_mean_scaled.values, scaler, original_cols_for_scaler, target_variable)
     
     return original_predictions, forecast_mean_scaled

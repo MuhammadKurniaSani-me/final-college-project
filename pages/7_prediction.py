@@ -37,7 +37,7 @@ with st.container(border=True):
     or_params = {'k_optimal': 2, 'sil_threshold': 0.0}
 
     final_model, scaler, final_features, original_cols, final_order = utils.train_final_model_from_best_scenario(
-        full_df=df_cleaned,
+        full_df_imputed=df_cleaned,
         use_fs='Seleksi Fitur' in best_scenario_name,
         use_or='Penghapusan Outlier' in best_scenario_name,
         fs_params=fs_params,
@@ -92,7 +92,7 @@ if submitted:
                 scaler=scaler,
                 exog_input_df=exog_input,
                 final_features=final_features,
-                original_cols=all_feature_names
+                original_cols_for_scaler=all_feature_names
             )
 
 
