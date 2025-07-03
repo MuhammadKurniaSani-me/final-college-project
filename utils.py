@@ -174,8 +174,7 @@ def create_correlation_plot(df):
 def create_timeseries_plot(df, y_col):
     """Membuat plot runtun waktu interaktif."""
     df_plot = df.copy()
-    df_plot['time_index'] = pd.to_datetime(df_plot[['year','month','day','hour']])
-    fig = px.line(df_plot, x='time_index', y=y_col, title=f'Tren Nilai {y_col} dari Waktu ke Waktu')
+    fig = px.line(df_plot, x=df_plot.index, y=y_col, title=f'Tren Nilai {y_col} dari Waktu ke Waktu')
     fig.update_traces(line=dict(width=2, color='#1E90FF'))
     fig.update_layout(xaxis_title='Tanggal', yaxis_title=f'Nilai {y_col}', hovermode='x unified')
     return fig
