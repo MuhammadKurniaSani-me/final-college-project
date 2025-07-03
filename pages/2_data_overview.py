@@ -1,323 +1,81 @@
-## define modules
-import pandas as pd
-import numpy as np
+# pages/2_data_overview.py
 import streamlit as st
+import pandas as pd
+import utils 
 
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.preprocessing import LabelEncoder
+# --- KONFIGURASI HALAMAN ---
+st.set_page_config(page_title="Ikhtisar Data", page_icon="📊", layout="wide")
 
-import matplotlib.pyplot as plt
-import seaborn as sns
-import plotly.express as px
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
+st.title("📊 Ikhtisar dan Tinjauan Data")
+st.markdown("""
+Halaman ini memungkinkan Anda untuk menjelajahi dataset kualitas udara Beijing secara mendalam. 
+Pilih stasiun pemantauan untuk memulai analisis.
+""")
 
-
-
-## define constants
+# --- PEMILIHAN STASIUN & PEMUATAN DATA ---
 STATION_NAMES = [
-    'Aotizhongxin', 'Changping', 'Dingling', 'Dongsi',
-    'Guanyuan', 'Gucheng', 'Huairou', 'Nongzhanguan',
-    'Shunyi', 'Tiantan', 'Wanliu', 'Wanshouxigong'
+    'Aotizhongxin', 'Changping', 'Dingling', 'Dongsi', 'Guanyuan', 'Gucheng', 
+    'Huairou', 'Nongzhanguan', 'Shunyi', 'Tiantan', 'Wanliu', 'Wanshouxigong'
 ]
+selected_station = st.selectbox(
+    "Pilih Stasiun Pemantauan:",
+    STATION_NAMES,
+    help="Data akan dimuat ulang sesuai dengan stasiun yang Anda pilih."
+)
 
-ALL_FEATURE_DESCRIPTIONS = {
-    "YEAR": "Tahun dari data.",
-    "MONTH": "Bulan dari data.",
-    "DAY": "Hari dari data.",
-    "HOUR": "Jam dari data.",
-    "PM2.5": "Jumlah konsentrasi partikel ukuran 2.5 mikrometer (µg/m³).",
-    "PM10": "Jumlah konsentrasi partikel ukuran 10 mikrometer (µg/m³).",
-    "SO2": "Jumlah konsentrasi belerang dioksida (µg/m³).",
-    "NO2": "Jumlah konsentrasi nitrogen dioksida (µg/m³).",
-    "CO": "Jumlah konsentrasi karbon monoksida (µg/m³).",
-    "O3": "Jumlah konsentrasi ozon (µg/m³).",
-    "TEMP": "Nilai suhu (°C).",
-    "PRES": "Nilai tekanan atmosfer (hPa).",
-    "DEWP": "Suhu titik embun (°C).",
-    "RAIN": "Curah hujan (mm).",
-    "WD": "Arah mata angin.",
-    "WSPM": "Kecepatan angin (m/s).",
-    "STATION": "Nama stasiun pemantauan."
-}
+if selected_station:
+    df = utils.load_station_data(selected_station)
 
-
-## define functions
-def styled_header(text, emoji, divider_color='grey', level='header'):
-    """Creates a styled subheader with an emoji."""
-
-    if level == 'header':
-        st.header(f"{emoji} {text}", divider=divider_color)
-
-    if level == 'subheader':
-        st.subheader(f"{emoji} {text}", divider=divider_color)
-
-
-def introduction_section():
-    """"
-    """
+    if 'main_dataframe' not in st.session_state:
+        st.session_state['main_dataframe'] = df
+        st.session_state['data_location'] = selected_station
     
-    styled_header('Get Along with Data', '👇', divider_color="grey", level='header')
-    st.markdown("Data kualitas udara kota Beijing China yang sudah banyak dipakai serta tersedia di _UC Irvine Machine Learning Repository_")
-    st.page_link("https://doi.org/10.1098/rspa.2017.0457", label="Zhang et al. 2017", icon=":material/open_in_new:")
-    st.markdown("   ")
+    if df is not None:
+        # --- TATA LETAK MENGGUNAKAN TAB ---
+        tab1, tab2, tab3 = st.tabs(["**Ikhtisar Data**", "**Distribusi Fitur**", "**Hubungan Antar Fitur**"])
 
+        # --- TAB 1: IKHTISAR DATA ---
+        with tab1:
+            st.header("Tampilan Awal Data", divider="blue")
+            st.dataframe(df.head())
+            st.info(f"Dataset untuk stasiun **{selected_station}** terdiri dari **{df.shape[0]}** baris dan **{df.shape[1]}** kolom.")
 
-@st.cache_data
-def fetch_and_clean_data(station_name):
-    """
-    """
+            st.header("Deskripsi Fitur", divider="blue")
+            descriptions = [(feat, utils.ALL_FEATURE_DESCRIPTIONS.get(feat, "N/A")) for feat in df.columns]
+            st.dataframe(pd.DataFrame(descriptions, columns=["Fitur", "Deskripsi"]), use_container_width=True)
 
-    url_path = 'https://raw.githubusercontent.com/MuhammadKurniaSani-me/datasets/refs/heads/main/real-dataset/beijing-multi-site-air-quality-data/'
-    # file_path = "./datas/locations/"
-    data = pd.read_csv(f'{url_path}PRSA_Data_{station_name}_20130301-20170228.csv')
+            st.header("Statistik Nilai yang Hilang (Missing Values)", divider="blue")
+            missing_plot = utils.create_missing_values_plot(df)
+            if missing_plot:
+                st.pyplot(missing_plot)
+            else:
+                st.success("🎉 Tidak ada nilai yang hilang (missing values) pada dataset ini!")
 
-    return data
+        # --- TAB 2: DISTRIBUSI FITUR ---
+        with tab2:
+            st.header("Tren Runtun Waktu PM2.5", divider="blue")
+            st.markdown("Visualisasi ini menunjukkan bagaimana nilai PM2.5 berubah dari waktu ke waktu.")
+            timeseries_plot = utils.create_timeseries_plot(df, 'PM2.5')
+            st.plotly_chart(timeseries_plot, use_container_width=True)
+            
+            st.header("Distribusi Masing-Masing Fitur", divider="blue")
+            st.markdown("Pilih fitur untuk melihat distribusi datanya dalam bentuk histogram.")
+            numeric_cols = df.select_dtypes(include='number').columns.tolist()
+            feature_to_plot = st.selectbox("Pilih Fitur:", numeric_cols, index=numeric_cols.index('PM2.5'))
+            dist_plot = utils.create_distribution_plot(df, feature_to_plot)
+            st.plotly_chart(dist_plot, use_container_width=True)
 
+        # --- TAB 3: HUBUNGAN ANTAR FITUR ---
+        with tab3:
+            st.header("Heatmap Korelasi", divider="blue")
+            st.markdown("""
+            Heatmap ini mengukur hubungan linear antara setiap pasang fitur. 
+            - Nilai mendekati **+1** (biru tua) berarti korelasi positif yang kuat.
+            - Nilai mendekati **-1** (merah tua) berarti korelasi negatif yang kuat.
+            - Nilai mendekati **0** berarti hubungan linear yang lemah.
+            """)
+            corr_plot = utils.create_correlation_plot(df)
+            st.pyplot(corr_plot)
 
-@st.cache_data
-def plot_missing_values_bar(df):
-    """
-    Visualizes missing values using an enhanced Seaborn bar chart.
-    """
-
-    # Calculate missing values and filter out columns with no missing data
-    missing_values = df.isnull().sum()
-    missing_values = missing_values[missing_values > 0].sort_values(ascending=False)
-
-    # If there are no missing values, return a message
-    if missing_values.empty:
-        st.success("Congratulations! No missing values found in the dataset.")
-        return None
-
-    # Set plot style
-    sns.set_style("whitegrid")
-    fig, ax = plt.subplots(figsize=(12, 7))
-
-    # Create a color palette
-    palette = sns.color_palette("viridis", len(missing_values))
-
-    # Create bar plot
-    barplot = sns.barplot(
-        x=missing_values.index,
-        y=missing_values.values,
-        ax=ax,
-        palette=palette
-    )
-
-    # Add data labels on top of each 
-    for p in barplot.patches:
-        ax.annotate(
-            format(p.get_height(), '.0f'),
-            (p.get_x() + p.get_width() / 2., p.get_height()),
-            ha='center', va='center',
-            xytext=(0, 9),
-            textcoords='offset points',
-            fontsize=10
-        )
-
-    # Set titles and labels with better formatting
-    ax.set_xlabel('Columns', fontsize=12)
-    ax.set_ylabel('Number of Missing Values', fontsize=12)
-    ax.tick_params(axis='x', rotation=45, labelsize=11)
-    ax.tick_params(axis='y', labelsize=11)
-
-    # Adjust layout to prevent labels from being cut off 
-    fig.tight_layout()
-
-    st.write("🎯 Number of missing values in each column")
-    st.page_link("https://doi.org/10.48550/arXiv.2410.03712", label="S. Alsufyani et al. 2024", icon=":material/open_in_new:")
-
-    return fig
-
-
-@st.cache_data
-def plot_correlations(df):
-    """
-    Visualizes the correlation of missing values using an enhanced Seaborn heatmap.
-    This version is cleaner and designed for Streamlit.
-    """
-
-    le = LabelEncoder()
-    correlation_df = df.copy(deep=True)
-    correlation_df['station'] = le.fit_transform(correlation_df.loc[:, 'station'])
-    correlation_df['wd'] = le.fit_transform(correlation_df.loc[:, 'wd'])
-    independent_features = correlation_df.iloc[:, 4:].columns
-    correlation_matrix = correlation_df.loc[:, independent_features].corr()
-
-    # Create a mask to hide the upper triangle (since the matrix is symmetric)
-    mask = np.triu(np.ones_like(correlation_matrix, dtype=bool))
-
-    # Set up the matplotlib figure
-    fig, ax = plt.subplots(figsize=(12, 10))
-
-    # Draw the heatmap
-    sns.heatmap(
-        correlation_matrix,
-        mask=mask,
-        annot=True,          # Show the correlation values
-        fmt=".2f",           # Format values to 2 decimal places
-        cmap='coolwarm',     # Use a diverging colormap
-        center=0,
-        linewidths=.5,
-        cbar_kws={"shrink": .75}
-    )
-
-    plt.xticks(rotation=45, ha="right", rotation_mode="anchor")
-    plt.yticks(rotation=0)
-    fig.tight_layout()
-
-    st.write("🎯 Correlation influence of each feature")
-    st.page_link("https://doi.org/10.1186/s40537-021-00548-1", label="A. Bekkar et al. 2021", icon=":material/open_in_new:")
-
-    return fig
-
-
-# @st.cache_data
-# def show_descriptive_stats(df):
-#     """
-#     Displays descriptive statistics for the numerical columns.
-#     """
-
-#     styled_subheader("Descriptive Statistics", "📊")
-#     st.write("Here's a statistical summary of the numerical features in the dataset. This helps in understanding the distribution, scale, and central tendency of the data.")
-#     st.dataframe(df.describe(), use_container_width=True)
-
-
-@st.cache_data
-def plot_time_series(df, y_col):
-    """
-    Plots the main dependent variable over time in a cool, interactive plot.
-    """
-
-    time_index_col = pd.to_datetime(df[['year','month','day','hour']])
-
-    fig = px.line(
-        df,
-        x=time_index_col,
-        y=y_col,
-        title=f' ',
-        template='plotly_dark',
-        markers=True
-    )
-
-    # Enhance the plot aesthetics
-    fig.update_traces(
-        line=dict(width=3, color='#33CFA5'),
-        marker=dict(size=8, color='#33CFA5', symbol='circle'),
-        fill='tozeroy',  # Adds a cool shaded area under the line
-        fillcolor='rgba(51, 207, 165, 0.2)'
-    )
-    fig.update_layout(
-        xaxis_title='Time Index',
-        yaxis_title=f'Normalized {y_col}',
-        title_font_size=20,
-        title_x=0.5,
-        hovermode='x unified'
-    )
-
-    st.write(f'🎯 Value of {y_col} over time')
-    st.page_link("https://doi.org/10.1186/s40537-021-00548-1", label="A. Bekkar et al. 2021", icon=":material/open_in_new:")
-
-    st.plotly_chart(fig, use_container_width=True)
-
-
-@st.cache_data
-def plot_feature_distributions(df):
-    """
-    Plots histograms for all numerical features to show their distributions.
-    """
-
-    # styled_header("Feature Distribution Insights", "👇", divider_color='grey', level='subheader')
-    st.write("🎯 The distribution of each feature with histograms")
-    st.page_link("https://doi.org/10.1098/rspa.2017.0457", label="Zhang et al. 2017", icon=":material/open_in_new:")
-
-    numeric_columns = df.select_dtypes(include=['number']).columns
-    cols = st.columns(2) # Create 2 columns for a cleaner layout
-
-    for i, col_name in enumerate(numeric_columns):
-        with cols[i % 2]:
-            fig = px.histogram(
-                df,
-                x=col_name,
-                title=f'Distribution of {col_name}',
-                template='plotly_dark',
-                color_discrete_sequence=['#FF6347'] # Tomato color
-            )
-            fig.update_layout(
-                bargap=0.1,
-                xaxis_title=f'Normalized {col_name}',
-                yaxis_title='Frequency'
-            )
-            st.plotly_chart(fig, use_container_width=True)
-
-
-def plot_scatter_relationships(df, x_col, y_cols):
-    """
-    Creates interactive scatter plots to visualize the relationship
-    between the dependent variable and key independent variables.
-    """
-
-    # styled_header(f"Relationships with {x_col}", "👇", divider_color='grey', level='subheader')
-    st.write(f"🎯 The Scatter plots help us visually confirm the relationships suggested by the correlation matrix")
-    st.page_link("https://doi.org/10.1098/rspa.2017.0457", label="Zhang et al. 2017", icon=":material/open_in_new:")
-
-    cols = st.columns(2) # Create 2 columns for layout
-
-    for i, y_col in enumerate(y_cols):
-        with cols[i % 2]:
-            fig = px.scatter(
-                df,
-                x=x_col,
-                y=y_col,
-                title=f'{x_col} vs. {y_col}',
-                template='plotly_dark',
-                trendline="ols", # Adds an Ordinary Least Squares regression line
-                trendline_color_override="red",
-                color_discrete_sequence=['#1E90FF'] # DodgerBlue
-            )
-            fig.update_layout(
-                xaxis_title=f'Normalized {x_col}',
-                yaxis_title=f'Normalized {y_col}'
-            )
-            st.plotly_chart(fig, use_container_width=True)
-
-
-## display contents
-
-### opening word 
-introduction_section()
-
-### load data
-selected_station = st.selectbox("Location options", STATION_NAMES)
-st.write('You selected location in:', selected_station)
-df = fetch_and_clean_data(selected_station).iloc[:, 1:]
-
-if 'dataframe' not in st.session_state:
-    st.session_state['main_dataframe'] = df
-    st.session_state['data_location'] = selected_station
-    st.session_state['locations_name'] = STATION_NAMES
-
-#### share df to all pages
-st.dataframe(df)
-
-### describe feature
-styled_header('What is inside of the dataset?', '👇', divider_color='grey', level='subheader')
-st.write("🎯 Features description")
-st.page_link("https://doi.org/10.1002/env.2819", label="Zhang et al. 2023", icon=":material/open_in_new:")
-filtered_descriptions = [(feature, ALL_FEATURE_DESCRIPTIONS.get(str.upper(feature), "Deskripsi tidak ditemukan.")) for feature in df.columns]
-df_features = pd.DataFrame(filtered_descriptions, columns=['Feature', 'Deskripsi'])
-st.dataframe(df_features, use_container_width=True)
-
-### explore data
-st.markdown("   ")
-st.pyplot(plot_missing_values_bar(df))
-st.markdown("   ")
-st.pyplot(plot_correlations(df)) 
-st.markdown("   ")
-plot_time_series(df, y_col='PM2.5')
-st.markdown("   ")
-plot_feature_distributions(df)
-st.markdown("   ")
-plot_scatter_relationships(df,'PM2.5', ['PM10'])
-st.markdown("   ")
+else:
+    st.info("Silakan pilih stasiun untuk melanjutkan.")

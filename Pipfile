@@ -5,13 +5,13 @@ name = "pypi"
 
 [packages]
 streamlit = "*"
-pandas = "*"
-numpy = "*"
-scikit-learn = "*"
 matplotlib = "*"
 seaborn = "*"
 plotly = "*"
 statsmodels = "*"
+pandas = "*"
+scikit-learn = "*"
+scipy = "*"
 
 [dev-packages]
 
