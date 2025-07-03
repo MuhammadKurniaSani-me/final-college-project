@@ -24,9 +24,12 @@ selected_station = st.selectbox(
 )
 
 if selected_station:
-    df = utils.load_station_data(selected_station)
+    df = utils.load_station_data(selected_station, num_rows=5000)
 
     if 'main_dataframe' not in st.session_state:
+        st.session_state['main_dataframe'] = df
+        st.session_state['data_location'] = selected_station
+    if 'main_dataframe' in st.session_state and st.session_state['data_location'] != selected_station:
         st.session_state['main_dataframe'] = df
         st.session_state['data_location'] = selected_station
     

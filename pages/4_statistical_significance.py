@@ -26,7 +26,7 @@ df_scaled = st.session_state.df_scaled
 st.sidebar.header("⚙️ Atur Ambang Batas")
 corr_threshold = st.sidebar.slider(
     "Ambang Batas Korelasi Pearson (Absolut):",
-    min_value=0.0, max_value=1.0, value=0.3, step=0.05,
+    min_value=0.0, max_value=1.0, value=0.5, step=0.05,
     help="Fitur dengan nilai korelasi absolut terhadap PM2.5 di bawah ini akan dihapus."
 )
 vif_threshold = st.sidebar.slider(

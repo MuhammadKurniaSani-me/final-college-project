@@ -16,9 +16,11 @@ import plotly.graph_objects as go
 import scipy.spatial.distance
 import math
 from statsmodels.tsa.statespace.sarimax import SARIMAX
+from statsmodels.tsa.statespace.sarimax import SARIMAXResults
 from sklearn.metrics import mean_squared_error
 from statsmodels.tsa.stattools import adfuller
 import warnings
+import joblib
 
 
 # --- KONSTANTA ---
@@ -86,7 +88,7 @@ WIND_DIRECTION_MAP = {
 # Ganti fungsi load_station_data Anda dengan versi yang sudah benar ini
 
 @st.cache_data
-def load_station_data(station_name):
+def load_station_data(station_name, num_rows=False):
     """
     Memuat data, membuat DatetimeIndex, dan menghapus kolom waktu asli.
     Ini adalah satu-satunya sumber data mentah untuk memastikan konsistensi.
@@ -95,7 +97,10 @@ def load_station_data(station_name):
         url_path = url_path = 'https://raw.githubusercontent.com/MuhammadKurniaSani-me/datasets/refs/heads/main/real-dataset/beijing-multi-site-air-quality-data/'
         file_path = f'{url_path}PRSA_Data_{station_name}_20130301-20170228.csv'
         # file_path = f'./datas/locations/PRSA_Data_{station_name}_20130301-20170228.csv'
-        df = pd.read_csv(file_path)
+        if num_rows:
+            df = pd.read_csv(file_path, nrows=num_rows)
+        else:
+            df = pd.read_csv(file_path)
         df = df.iloc[:, 1:] # Hapus kolom 'No'
 
         # 1. Gabungkan kolom waktu menjadi satu kolom 'datetime'
@@ -706,13 +711,17 @@ def inverse_transform_predictions(scaled_predictions, scaler, all_feature_names,
     # Lakukan inverse transform pada seluruh DataFrame dummy
     inversed_df = scaler.inverse_transform(dummy_df)
     
-    # Ambil nilai yang sudah di-inverse HANYA dari kolom target
-    # Cari indeks kolom target untuk mengambil data dari array NumPy
+    # --- PERBAIKAN DI SINI ---
+    # 1. Konversi numpy array 'all_feature_names' menjadi sebuah Python list
+    all_feature_names_list = list(all_feature_names)
+    
+    # 2. Cari indeks pada list tersebut, bukan pada numpy array
     try:
-        target_idx = all_feature_names.index(target_variable)
+        target_idx = all_feature_names_list.index(target_variable)
     except ValueError:
-        # Fallback jika nama kolom tidak ditemukan, meskipun seharusnya selalu ada
-        return np.array([0] * len(scaled_predictions))
+        # Fallback jika nama target tidak ditemukan
+        return np.array([None] * len(scaled_predictions))
+    # --- AKHIR PERBAIKAN ---
 
     original_scale_predictions = inversed_df[:, target_idx]
     
@@ -850,36 +859,56 @@ def train_final_model_from_best_scenario(
     model = SARIMAX(endog, exog=exog, order=final_order)
     results = model.fit(disp=False)
     
-    # Kembalikan semua artefak penting
+    # Kembalikan semua artefak penting 
     return results, scaler, final_features, original_cols_for_scaling, final_order
 
 # Ganti seluruh fungsi predict_future_values dengan ini
-def predict_future_values(final_model, scaler, exog_input_df, final_features, original_cols_for_scaler, target_variable='PM2.5'):
+def predict_future_values(final_model, scaler, exog_input_df, final_features, target_variable='PM2.5'):
     """
     Membuat prediksi masa depan dan mengembalikannya ke skala asli (versi lebih robust).
     """
-    # 1. Buat DataFrame dengan struktur lengkap untuk di-scaling
-    #    Isi dengan nol, pastikan urutan kolom sama persis dengan saat scaler dilatih
-    prediction_template = pd.DataFrame(np.zeros((len(exog_input_df), len(original_cols_for_scaler))), 
-                                       columns=original_cols_for_scaler)
+    # --- PERBAIKAN LOGIKA UTAMA DI SINI ---
     
-    # 2. Isi nilai dari input pengguna ke kolom yang sesuai
-    for col in exog_input_df.columns:
-        if col in prediction_template.columns:
-            prediction_template[col] = exog_input_df[col].values
+    # 1. Ambil daftar & urutan kolom yang benar langsung dari objek scaler
+    required_cols = scaler.feature_names_in_
+    
+    # 2. Buat "cetakan" DataFrame yang sempurna menggunakan daftar kolom dari scaler
+    prediction_template = pd.DataFrame(0.0, 
+                                       index=exog_input_df.index, 
+                                       columns=required_cols)
 
-    # 3. Scale seluruh template DataFrame
-    scaled_values = scaler.transform(prediction_template)
-    df_scaled = pd.DataFrame(scaled_values, columns=original_cols_for_scaler)
+    # 3. "Tempelkan" nilai input dari pengguna ke dalam cetakan.
+    prediction_template.update(exog_input_df)
     
-    # 4. Ambil kolom eksogen yang sudah di-scale untuk prediksi
+    # 4. Sekarang, 'prediction_template' dijamin cocok dengan scaler
+    scaled_values = scaler.transform(prediction_template)
+    df_scaled = pd.DataFrame(scaled_values, columns=required_cols, index=prediction_template.index)
+    
+    # --- AKHIR PERBAIKAN ---
+    # 5. Ambil hanya kolom fitur yang relevan untuk prediksi
     exog_for_forecast = df_scaled[final_features]
 
-    # 5. Buat prediksi (hasil masih dalam skala 0-1)
+    # 6. Buat prediksi (hasil masih dalam skala 0-1)
     forecast_result = final_model.get_forecast(steps=len(exog_for_forecast), exog=exog_for_forecast)
     forecast_mean_scaled = forecast_result.predicted_mean
     
-    # 6. Lakukan inverse transform
-    original_predictions = inverse_transform_predictions(forecast_mean_scaled.values, scaler, original_cols_for_scaler, target_variable)
+    # 7. Lakukan inverse transform (required_cols sama dengan original_cols_for_scaler)
+    original_predictions = inverse_transform_predictions(
+        forecast_mean_scaled.values, scaler, required_cols, target_variable
+    )
     
     return original_predictions, forecast_mean_scaled
+
+# --- FUNGSI BARU UNTUK MEMUAT ARTEFAK ---
+@st.cache_resource(show_spinner="Memuat model dan artefak dari file...")
+def load_prediction_artifacts(artifacts_path='../models/prediction_artifacts.joblib'):
+    """
+    Memuat dictionary artefak yang disimpan (scaler, daftar fitur, dll.).
+    """
+    try:
+        artifacts = joblib.load(artifacts_path)
+        # Muat model statsmodels secara terpisah menggunakan path dari artefak
+        artifacts['model'] = SARIMAXResults.load(artifacts['model_path'])
+        return artifacts
+    except FileNotFoundError:
+        return None

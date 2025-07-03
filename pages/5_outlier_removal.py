@@ -32,7 +32,7 @@ df_for_clustering = df_scaled[['PM2.5'] + final_features]
 st.sidebar.header("⚙️ Kontrol Analisis Outlier")
 k_range = st.sidebar.slider("Rentang 'k' untuk diuji:", min_value=2, max_value=15, value=10, help="Jumlah maksimum klaster yang akan diuji untuk menemukan k optimal.")
 k_optimal = st.sidebar.number_input("Pilih 'k' Optimal:", min_value=2, max_value=k_range, value=2, help="Masukkan nilai 'k' yang Anda anggap terbaik berdasarkan grafik di bawah.")
-silhouette_threshold = st.sidebar.slider("Ambang Batas Silhouette Score:", min_value=-1.0, max_value=1.0, value=0.0, step=0.05, help="Data dengan skor di bawah ini akan dianggap sebagai outlier.")
+silhouette_threshold = st.sidebar.slider("Ambang Batas Silhouette Score:", min_value=-1.0, max_value=1.0, value=0.5, step=0.05, help="Data dengan skor di bawah ini akan dianggap sebagai outlier.")
 
 st.header("Tahap 1: Menentukan Jumlah Klaster (k) Optimal", divider="blue")
 if st.button("Jalankan Analisis Klaster (Mahalanobis)", type="primary"):
