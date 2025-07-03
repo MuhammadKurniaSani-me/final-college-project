@@ -92,6 +92,8 @@ def load_station_data(station_name):
     Ini adalah satu-satunya sumber data mentah untuk memastikan konsistensi.
     """
     try:
+        # url_path = url_path = 'https://raw.githubusercontent.com/MuhammadKurniaSani-me/datasets/refs/heads/main/real-dataset/beijing-multi-site-air-quality-data/'
+        # file_path = f'{url_path}PRSA_Data_{station_name}_20130301-20170228.csv'
         file_path = f'./datas/locations/PRSA_Data_{station_name}_20130301-20170228.csv'
         df = pd.read_csv(file_path)
         df = df.iloc[:, 1:] # Hapus kolom 'No'
