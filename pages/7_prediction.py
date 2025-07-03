@@ -66,83 +66,152 @@ with st.form("prediction_form"):
 # ... (kode di atasnya, termasuk 'with st.form(...):', tetap sama) ...
 
 # --- PROSES & TAMPILAN PREDIKSI (VERSI BARU DENGAN PLOT DINAMIS) ---
+# if submitted:
+#     # Buat DataFrame dari input pengguna untuk validasi
+#     input_df = pd.DataFrame(edited_df)
+
+#     # --- PERBAIKAN UTAMA DI SINI: PASTIKAN TIPE DATA BENAR ---
+#     try:
+#         # Coba konversi semua input menjadi tipe float. Ini sangat penting.
+#         exog_input = input_df.astype(float)
+#     except ValueError:
+#         st.error("⚠️ GAGAL: Pastikan semua input pada tabel adalah angka yang valid.")
+#         st.stop() # Hentikan eksekusi jika ada input non-numerik
+#     # --- AKHIR PERBAIKAN ---
+
+#     # Validasi input sebelum melanjutkan
+#     if input_df.isnull().values.any():
+#         st.error("⚠️ GAGAL: Terdapat sel kosong pada tabel input. Harap isi semua nilai.")
+#     else:
+#         with st.spinner("Membuat peramalan..."):
+#             # Lanjutkan dengan exog_input yang sudah divalidasi
+#             exog_input = input_df
+            
+#             original_predictions, scaled_predictions = utils.predict_future_values(
+#                 final_model=final_model,
+#                 scaler=scaler,
+#                 exog_input_df=exog_input,
+#                 final_features=final_features,
+#                 original_cols_for_scaler=all_feature_names
+#             )
+
+
+#             # Buat indeks waktu masa depan yang sebenarnya
+#             last_row = st.session_state.main_dataframe.iloc[-1]
+#             last_timestamp_dict = last_row[['year', 'month', 'day', 'hour']].to_dict()
+#             last_timestamp_df = pd.DataFrame(last_timestamp_dict, index=[0])
+#             last_timestamp = pd.to_datetime(last_timestamp_df)[0]
+#             future_index = pd.date_range(start=last_timestamp + pd.Timedelta(hours=1), periods=n_periods, freq='h')
+            
+#             # Tampilkan tabel hasil (dalam skala asli)
+#             result_df = pd.DataFrame({"Waktu Prediksi": future_index, "Prediksi PM2.5 (µg/m³)": original_predictions})
+#             st.subheader("Hasil Peramalan")
+#             st.dataframe(result_df.style.format({"Waktu Prediksi": "{:%Y-%m-%d %H:%M}", "Prediksi PM2.5 (µg/m³)": "{:.2f}"}), use_container_width=True)
+
+#             # --- LOGIKA BARU UNTUK VISUALISASI DINAMIS ---
+#             st.subheader("Grafik Prediksi Kontekstual")
+            
+#             # 1. Tentukan ukuran jendela historis berdasarkan permintaan Anda (n^2)
+#             historical_window_size = n_periods * n_periods
+#             st.markdown(f"Untuk memprediksi **{n_periods} jam** ke depan, kami menampilkan **{historical_window_size} jam** data historis sebagai konteks.")
+
+#             # 2. Ambil data historis dari DataFrame asli (skala asli)
+#             # Kita gunakan data yang sudah diimputasi agar tidak ada celah di grafik
+#             historical_data = st.session_state.df_imputed['PM2.5'].tail(historical_window_size)
+            
+#             # 3. Buat grafik dengan data skala asli
+#             fig = utils.go.Figure()
+            
+#             # Plot data historis dalam skala asli
+#             fig.add_trace(utils.go.Scatter(
+#                 x=historical_data.index, 
+#                 y=historical_data, 
+#                 mode='lines', 
+#                 name='Data Historis (Skala Asli)'
+#             ))
+            
+#             # Plot data prediksi dalam skala asli
+#             fig.add_trace(utils.go.Scatter(
+#                 x=future_index, 
+#                 y=original_predictions, 
+#                 mode='lines+markers', 
+#                 name='Hasil Prediksi (Skala Asli)', 
+#                 line=dict(color='red', dash='dash')
+#             ))
+            
+#             fig.update_layout(
+#                 title="Visualisasi Prediksi di Masa Depan (Skala Asli)",
+#                 xaxis_title="Waktu", 
+#                 yaxis_title="Nilai PM2.5 (µg/m³)" # Sumbu Y sekarang dalam skala asli
+#             )
+#             st.plotly_chart(fig, use_container_width=True)
+#             # --- AKHIR LOGIKA BARU ---
+
+# ... (kode di atasnya, termasuk 'with st.form(...):', tetap sama) ...
+
+# --- PROSES & TAMPILAN PREDIKSI ---
 if submitted:
-    # Buat DataFrame dari input pengguna untuk validasi
     input_df = pd.DataFrame(edited_df)
-
-    # --- PERBAIKAN UTAMA DI SINI: PASTIKAN TIPE DATA BENAR ---
-    try:
-        # Coba konversi semua input menjadi tipe float. Ini sangat penting.
-        exog_input = input_df.astype(float)
-    except ValueError:
-        st.error("⚠️ GAGAL: Pastikan semua input pada tabel adalah angka yang valid.")
-        st.stop() # Hentikan eksekusi jika ada input non-numerik
-    # --- AKHIR PERBAIKAN ---
-
-    # Validasi input sebelum melanjutkan
     if input_df.isnull().values.any():
         st.error("⚠️ GAGAL: Terdapat sel kosong pada tabel input. Harap isi semua nilai.")
     else:
         with st.spinner("Membuat peramalan..."):
-            # Lanjutkan dengan exog_input yang sudah divalidasi
-            exog_input = input_df
+            exog_input = input_df.astype(float)
             
             original_predictions, scaled_predictions = utils.predict_future_values(
-                final_model=final_model,
-                scaler=scaler,
-                exog_input_df=exog_input,
-                final_features=final_features,
-                original_cols_for_scaler=all_feature_names
+                final_model=final_model, scaler=scaler, exog_input_df=exog_input,
+                final_features=final_features, original_cols_for_scaler=all_feature_names
             )
 
-
-            # Buat indeks waktu masa depan yang sebenarnya
+            # Buat indeks waktu MASA DEPAN yang sebenarnya untuk tabel
             last_row = st.session_state.main_dataframe.iloc[-1]
             last_timestamp_dict = last_row[['year', 'month', 'day', 'hour']].to_dict()
             last_timestamp_df = pd.DataFrame(last_timestamp_dict, index=[0])
             last_timestamp = pd.to_datetime(last_timestamp_df)[0]
-            future_index = pd.date_range(start=last_timestamp + pd.Timedelta(hours=1), periods=n_periods, freq='h')
+            future_datetime_index = pd.date_range(start=last_timestamp + pd.Timedelta(hours=1), periods=n_periods, freq='h')
             
-            # Tampilkan tabel hasil (dalam skala asli)
-            result_df = pd.DataFrame({"Waktu Prediksi": future_index, "Prediksi PM2.5 (µg/m³)": original_predictions})
+            # Tampilkan tabel hasil
+            result_df = pd.DataFrame({"Waktu Prediksi": future_datetime_index, "Prediksi PM2.5 (µg/m³)": original_predictions})
             st.subheader("Hasil Peramalan")
             st.dataframe(result_df.style.format({"Waktu Prediksi": "{:%Y-%m-%d %H:%M}", "Prediksi PM2.5 (µg/m³)": "{:.2f}"}), use_container_width=True)
 
-            # --- LOGIKA BARU UNTUK VISUALISASI DINAMIS ---
+           # --- LOGIKA BARU UNTUK VISUALISASI SKALA ASLI ---
             st.subheader("Grafik Prediksi Kontekstual")
             
-            # 1. Tentukan ukuran jendela historis berdasarkan permintaan Anda (n^2)
             historical_window_size = n_periods * n_periods
             st.markdown(f"Untuk memprediksi **{n_periods} jam** ke depan, kami menampilkan **{historical_window_size} jam** data historis sebagai konteks.")
 
-            # 2. Ambil data historis dari DataFrame asli (skala asli)
-            # Kita gunakan data yang sudah diimputasi agar tidak ada celah di grafik
-            historical_data = st.session_state.df_imputed['PM2.5'].tail(historical_window_size)
+            # 1. Ambil data historis dari DataFrame utama (SKALA ASLI)
+            # Kita gunakan df_imputed untuk memastikan tidak ada NaN di plot
+            historical_data_unscaled = st.session_state.df_imputed['PM2.5'].tail(historical_window_size)
             
-            # 3. Buat grafik dengan data skala asli
+            # 2. Reset indeks untuk mendapatkan sumbu-X numerik
+            historical_data_for_plot = historical_data_unscaled.reset_index(drop=True)
+            
+            # 3. Buat indeks numerik untuk prediksi
+            last_numerical_index = historical_data_for_plot.index[-1]
+            future_numerical_index = np.arange(last_numerical_index + 1, last_numerical_index + 1 + n_periods)
+            
+            # 5. Buat grafik menggunakan indeks numerik yang konsisten
             fig = utils.go.Figure()
             
-            # Plot data historis dalam skala asli
             fig.add_trace(utils.go.Scatter(
-                x=historical_data.index, 
-                y=historical_data, 
-                mode='lines', 
-                name='Data Historis (Skala Asli)'
+                x=historical_data_for_plot.index, 
+                y=historical_data_for_plot.values, 
+                mode='lines', name='Data Historis (Ternormalisasi)'
             ))
             
-            # Plot data prediksi dalam skala asli
             fig.add_trace(utils.go.Scatter(
-                x=future_index, 
-                y=original_predictions, 
-                mode='lines+markers', 
-                name='Hasil Prediksi (Skala Asli)', 
+                x=future_numerical_index, 
+                y=original_predictions, # Gunakan prediksi yang ternormalisasi untuk plot ini
+                mode='lines+markers', name='Hasil Prediksi (Ternormalisasi)', 
                 line=dict(color='red', dash='dash')
             ))
             
             fig.update_layout(
-                title="Visualisasi Prediksi di Masa Depan (Skala Asli)",
-                xaxis_title="Waktu", 
-                yaxis_title="Nilai PM2.5 (µg/m³)" # Sumbu Y sekarang dalam skala asli
+                title="Visualisasi Prediksi di Masa Depan (Skala Ternormalisasi)",
+                xaxis_title="Indeks Waktu (Urutan Data)", # Judul sumbu-X diubah
+                yaxis_title="Nilai PM2.5 (Ternormalisasi)"
             )
             st.plotly_chart(fig, use_container_width=True)
-            # --- AKHIR LOGIKA BARU ---
+            # --- AKHIR PERBAIKAN ---
