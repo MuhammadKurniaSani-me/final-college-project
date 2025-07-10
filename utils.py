@@ -94,8 +94,9 @@ def load_station_data(station_name, num_rows=False):
     Ini adalah satu-satunya sumber data mentah untuk memastikan konsistensi.
     """
     try:
-        url_path = url_path = 'https://raw.githubusercontent.com/MuhammadKurniaSani-me/datasets/refs/heads/main/real-dataset/beijing-multi-site-air-quality-data/'
-        file_path = f'{url_path}PRSA_Data_{station_name}_20130301-20170228.csv'
+        # url_path = url_path = 'https://raw.githubusercontent.com/MuhammadKurniaSani-me/datasets/refs/heads/main/real-dataset/beijing-multi-site-air-quality-data/'
+        local_path = './datas/locations/'
+        file_path = f'{local_path}PRSA_Data_{station_name}_20130301-20170228.csv'
         # file_path = f'./datas/locations/PRSA_Data_{station_name}_20130301-20170228.csv'
         if num_rows:
             df = pd.read_csv(file_path, nrows=num_rows)
@@ -436,7 +437,7 @@ def create_cluster_visualization(df_with_clusters):
 
 # --- FUNGSI EVALUASI MODEL ---
 
-def find_best_order_grid_search(series, max_p=3, max_q=3):
+def find_best_order_grid_search(series, max_p=3, max_q=3, _status_container=None):
     """
     Menemukan order ARIMA (p,d,q) terbaik menggunakan grid search dan uji ADF.
     
@@ -444,6 +445,10 @@ def find_best_order_grid_search(series, max_p=3, max_q=3):
     --------
     tuple: Order (p,d,q) terbaik yang ditemukan.
     """
+    
+    if _status_container:
+        _status_container.write(f"    - Menjalankan Uji ADF pada data (panjang {len(series)})...")
+
     # 1. Menentukan orde diferensiasi (d) dengan Uji ADF
     adf_test = adfuller(series, autolag='AIC')
     p_value = adf_test[1]
@@ -455,6 +460,10 @@ def find_best_order_grid_search(series, max_p=3, max_q=3):
         diff_series = series.diff().dropna()
         adf_test_diff = adfuller(diff_series, autolag='AIC')
         # (Untuk kesederhanaan, kita asumsikan d=1 sudah cukup, bisa diperluas jika perlu)
+
+    if _status_container:
+        _status_container.write(f"    - Hasil ADF p-value: {p_value:.3f} -> d={d}")
+        _status_container.write(f"    - Memulai Grid Search untuk (p,q)...")
 
     # 2. Grid Search untuk p dan q
     best_aic = float('inf')
@@ -487,6 +496,9 @@ def find_best_order_grid_search(series, max_p=3, max_q=3):
     # Jika tidak ada order yang ditemukan (sangat jarang), kembalikan default
     if best_order is None:
         return (1, d, 1)
+
+    if _status_container:
+        _status_container.write(f"    - Order terbaik ditemukan: {best_order} (AIC: {best_aic:.2f})")
         
     return best_order
 
@@ -658,29 +670,26 @@ def create_evaluation_plot(plot_data):
 
 def find_best_order_grid_search(series, max_p=3, max_q=3):
     """
-    Menemukan order ARIMA (p,d,q) terbaik menggunakan grid search dan uji ADF.
+    Mencari order ARIMA (p,d,q) terbaik menggunakan grid search dan uji ADF.
+    Fungsi ini murni untuk komputasi dan mengembalikan hasilnya beserta log.
     """
+    logs = []
+    
     # 1. Menentukan orde diferensiasi (d) dengan Uji ADF
     adf_test = adfuller(series, autolag='AIC')
     p_value = adf_test[1]
-    
-    d = 0
-    if p_value > 0.05:
-        d = 1
-        
-    # 2. Grid Search untuk p dan q
+    d = 1 if p_value > 0.05 else 0
+    logs.append(f"    - Hasil Uji ADF p-value: {p_value:.3f} -> Menentukan d={d}")
+    logs.append(f"    - Memulai Grid Search untuk (p,q)...")
+
+    # 2. Grid Search untuk p dan q untuk menemukan AIC terendah
     best_aic = float('inf')
     best_order = None
     
-    p_range = range(max_p + 1)
-    q_range = range(max_q + 1)
-    
-    warnings.filterwarnings("ignore") 
-    
-    for p in p_range:
-        for q in q_range:
-            if p == 0 and q == 0:
-                continue
+    warnings.filterwarnings("ignore") # Abaikan warning konvergensi dari statsmodels
+    for p in range(max_p + 1):
+        for q in range(max_q + 1):
+            if p == 0 and q == 0: continue
             try:
                 model = SARIMAX(series, order=(p, d, q))
                 results = model.fit(disp=False)
@@ -688,14 +697,15 @@ def find_best_order_grid_search(series, max_p=3, max_q=3):
                     best_aic = results.aic
                     best_order = (p, d, q)
             except Exception:
-                continue
-                
-    warnings.filterwarnings("default")
+                continue # Lanjutkan jika ada kombinasi yang error
+    warnings.filterwarnings("default") # Kembalikan warning seperti semula
+
+    # Fallback jika tidak ada model yang berhasil
+    if best_order is None: best_order = (1, d, 1)
     
-    if best_order is None:
-        return (1, d, 1) # Fallback
+    logs.append(f"    - Order terbaik ditemukan: {best_order} (AIC: {best_aic:.2f})")
         
-    return best_order
+    return best_order, logs
 
 def inverse_transform_predictions(scaled_predictions, scaler, all_feature_names, target_variable):
     """
@@ -727,95 +737,6 @@ def inverse_transform_predictions(scaled_predictions, scaler, all_feature_names,
     
     return original_scale_predictions
 
-# @st.cache_resource(show_spinner="Melatih model final pada seluruh data...")
-# def train_final_model_from_best_scenario(
-#     full_df, 
-#     use_fs, 
-#     use_or, 
-#     fs_params, 
-#     or_params
-# ):
-#     """
-#     Melatih satu model ARIMAX final pada seluruh dataset historis 
-#     berdasarkan skenario terbaik.
-#     """
-
-#     df = full_df.copy()
-    
-#     # --- PREPROCESSING (SCALING) ---
-#     # Asumsikan data sudah diimputasi. Kita akan scale di sini.
-#     # Fitur waktu sudah dihapus di tahap sebelumnya.
-#     df_scaled, scaler = preprocess_scale(df)
-
-#     # --- FEATURE SELECTION (JIKA DIPILIH) ---
-#     if use_fs:
-#         corr_matrix = df_scaled.corr(method='pearson')
-#         corr_with_target = corr_matrix['PM2.5'].abs().drop('PM2.5')
-#         features_passed_corr = corr_with_target[corr_with_target >= fs_params['corr_threshold']].index.tolist()
-        
-#         df_for_vif = df_scaled[features_passed_corr]
-#         vif_df = calculate_vif(df_for_vif)
-#         final_features = vif_df[vif_df['Skor VIF'] <= fs_params['vif_threshold']]['Fitur'].tolist()
-        
-#         df_processed = df_scaled[['PM2.5'] + final_features]
-#     else:
-#         df_processed = df_scaled
-#         final_features = df.drop(columns=['PM2.5']).columns.tolist()
-
-#     # --- OUTLIER REMOVAL (JIKA DIPILIH) ---
-#     if use_or:
-#         df_processed, _, _ = get_outliers_df(df_processed, k=or_params['k_optimal'], silhouette_threshold=or_params['sil_threshold'])
-
-#     # --- PELATIHAN MODEL FINAL ---
-#     endog = df_processed['PM2.5']
-#     exog = df_processed[final_features]
-    
-#     # Temukan order terbaik untuk seluruh data
-#     final_order = find_best_order_grid_search(endog, max_p=3, max_q=3)
-    
-#     # Latih model
-#     model = SARIMAX(endog, exog=exog, order=final_order)
-#     results = model.fit(disp=False)
-    
-#     # Kembalikan semua artefak penting
-#     return results, scaler, final_features, full_df.columns.tolist(), final_order
-
-# def predict_future_values(final_model, scaler, exog_input_df, final_features, original_cols, target_variable='PM2.5'):
-#     """
-#     Membuat prediksi masa depan dan mengembalikannya ke skala asli.
-#     Versi ini memperbaiki pembuatan DataFrame dummy untuk proses scaling.
-#     """
-    
-#     # --- PERBAIKAN LOGIKA UTAMA DI SINI ---
-
-#     # 1. Buat "cetakan" DataFrame yang benar.
-#     #    - Buat DataFrame berisi nol dengan SEMUA kolom asli dan indeks yang sama dengan input.
-#     #    - Ini memastikan urutan dan nama kolom sama persis seperti yang diharapkan scaler.
-#     template_df = pd.DataFrame(0, index=exog_input_df.index, columns=original_cols)
-
-#     # 2. "Tempelkan" nilai input dari pengguna ke dalam cetakan.
-#     #    Metode .update() akan mengisi nilai berdasarkan nama kolom yang cocok.
-#     template_df.update(exog_input_df)
-    
-#     # 3. Sekarang, 'template_df' siap untuk di-scale karena strukturnya sudah benar.
-#     scaled_array = scaler.transform(template_df)
-#     df_scaled = pd.DataFrame(scaled_array, columns=original_cols, index=template_df.index)
-    
-#     # --- AKHIR PERBAIKAN ---
-
-#     # 4. Ambil hanya kolom fitur yang relevan untuk prediksi
-#     exog_for_forecast = df_scaled[final_features]
-
-#     # 5. Buat prediksi (hasil masih dalam skala 0-1)
-#     forecast_result = final_model.get_forecast(steps=len(exog_for_forecast), exog=exog_for_forecast)
-#     forecast_mean_scaled = forecast_result.predicted_mean
-    
-#     # 6. Lakukan inverse transform untuk kembali ke skala asli
-#     original_predictions = inverse_transform_predictions(forecast_mean_scaled, scaler, original_cols, target_variable)
-    
-#     return original_predictions, forecast_mean_scaled
-
-# Ganti seluruh fungsi train_final_model_from_best_scenario dengan ini
 @st.cache_resource(show_spinner="Melatih model final pada seluruh data...")
 def train_final_model_from_best_scenario(
     full_df_imputed, 
@@ -912,3 +833,137 @@ def load_prediction_artifacts(artifacts_path='../models/prediction_artifacts.job
         return artifacts
     except FileNotFoundError:
         return None
+
+
+def _evaluate_single_station(raw_df, use_fs, use_or, fs_params, or_params, station_name):
+    """
+    Fungsi helper yang bersih untuk menjalankan pipeline lengkap untuk satu stasiun.
+    Versi final ini tidak lagi mengandung elemen UI.
+    """
+    target_variable = 'PM2.5'
+    all_rmse_scores, all_r2_scores = [], []
+    station_logs = [f"--- Log untuk Stasiun: {station_name} ---"]
+
+    # Tahap 1: Preprocessing
+    if 'station' not in raw_df.columns: raw_df['station'] = station_name
+    station_code_map = {station_name: 0}
+    encoded_df = preprocess_encoding(raw_df, station_name, station_code_map)
+    imputed_df = preprocess_impute(encoded_df)
+    scaled_df, _ = preprocess_scale(imputed_df)
+    station_logs.append("✅ Prapemrosesan Selesai (Encoding, Imputasi, Scaling).")
+
+    # Tahap 2: Seleksi Fitur
+    if use_fs:
+        corr_matrix = scaled_df.corr(method='pearson')
+        corr_with_target = corr_matrix[target_variable].abs().drop(target_variable)
+        features_passed_corr = corr_with_target[corr_with_target >= fs_params['corr_threshold']].index.tolist()
+        df_for_vif = scaled_df[features_passed_corr]
+        vif_df = calculate_vif(df_for_vif) if not df_for_vif.empty else pd.DataFrame(columns=['Fitur', 'Skor VIF'])
+        final_features = vif_df[vif_df['Skor VIF'] <= fs_params['vif_threshold']]['Fitur'].tolist()
+    else:
+        final_features = scaled_df.drop(columns=[target_variable]).columns.tolist()
+    df_scenario = scaled_df[[target_variable] + final_features].copy()
+    station_logs.append(f"Kolom yang dipakai: {df_scenario.columns.tolist()}")
+
+    # Tahap 3: Outlier Removal (sebelum split)
+    if use_or:
+        station_logs.append("    - Menjalankan Outlier Removal pada keseluruhan data...")
+        df_scenario, outliers_df, _ = get_outliers_df(df_scenario, k=or_params['k_optimal'], silhouette_threshold=or_params['sil_threshold'])
+        station_logs.append(f"    - Ditemukan & dihapus {len(outliers_df)} outlier. Sisa data: {len(df_scenario)} baris.")
+
+    # Tahap 4: Evaluasi
+    n_repetitions, train_percent, test_percent = 10, 0.6, 0.1
+    N = len(df_scenario)
+    train_samples = math.floor(train_percent * N)
+    test_samples = math.floor(test_percent * N)
+    station_logs.append(f"Total observasi setelah prapemrosesan (N): {N}")
+    station_logs.append(f"Sampel latih per jendela: {train_samples} ({train_percent*100:.0f}% dari N)")
+    station_logs.append(f"Sampel uji per jendela: {test_samples} ({test_percent*100:.0f}% dari N)")
+    
+    splits = list(rep_holdout_splitter(df_scenario, n_repetitions, train_percent, test_percent))
+    
+    for i, (train_df, test_df) in enumerate(splits):
+        # HAPUS st.write dari sini
+        station_logs.append(f"\n--- Repetisi {i + 1} ---")
+        station_logs.append(f"  Periode Latih: {train_df.index[0].date()} hingga {train_df.index[-1].date()}, Panjang: {len(train_df)}")
+        station_logs.append(f"  Periode Uji:  {test_df.index[0].date()} hingga {test_df.index[-1].date()}, Panjang: {len(test_df)}")
+
+        endog_train = train_df[target_variable]
+        
+        if len(endog_train) < 30: # Pengecekan keamanan
+            station_logs.append(f"    - ⚠️ PERINGATAN: Data latih terlalu sedikit ({len(endog_train)} baris). Melewati repetisi ini.")
+            continue
+
+        order, order_logs = find_best_order_grid_search(endog_train, max_p=3, max_q=3)
+        station_logs.extend(order_logs)
+
+        exog_train = train_df[final_features]
+        exog_test = test_df[final_features]
+        endog_test = test_df[target_variable]
+        
+        model = SARIMAX(endog_train, exog=exog_train, order=order)
+        results = model.fit(disp=False)
+        forecast = results.get_forecast(steps=len(endog_test), exog=exog_test)
+        forecast_mean = forecast.predicted_mean
+        
+        rmse = np.sqrt(mean_squared_error(endog_test, forecast_mean))
+        all_rmse_scores.append(rmse)
+        r2 = r2_score(endog_test, forecast_mean)
+        all_r2_scores.append(r2)
+        
+    return {"avg_rmse": np.mean(all_rmse_scores) if all_rmse_scores else None, 
+            "avg_r2": np.mean(all_r2_scores) if all_r2_scores else None, 
+            "logs": station_logs}
+
+@st.cache_data # Cache tetap di sini karena ini adalah fungsi utama yang berat
+def run_evaluation_for_all_stations(scenario_name, use_fs, use_or):
+    """
+    Fungsi utama yang murni untuk komputasi.
+    Ia menjalankan evaluasi untuk semua stasiun dan mengembalikan hasilnya
+    beserta semua log yang terkumpul.
+    """
+
+    STATION_NAMES = [
+    'Aotizhongxin', 'Changping', 'Dingling', 'Dongsi', 'Guanyuan', 'Gucheng', 
+    'Huairou', 'Nongzhanguan', 'Shunyi', 'Tiantan', 'Wanliu', 'Wanshouxigong'
+    ]
+    
+    fs_params = {'corr_threshold': 0.3, 'vif_threshold': 10.0}
+    or_params = {'k_optimal': 2, 'sil_threshold': 0.3}
+    
+    results_per_station = []
+    full_log_data = [] # List untuk mengumpulkan semua log dari semua stasiun
+
+    # Loop melalui setiap stasiun
+    for i, station in enumerate(STATION_NAMES):
+
+        # 1. Muat data untuk stasiun saat ini ke dalam variabel 'raw_df'
+        raw_df = load_station_data(station)
+        
+        # 2. Lanjutkan hanya jika data berhasil dimuat
+        if raw_df is None: 
+            continue
+        
+        # 3. Panggil fungsi helper dengan 'raw_df' yang sudah terdefinisi
+        station_metrics = _evaluate_single_station(
+            raw_df=raw_df,  # <-- Gunakan variabel yang sudah ada
+            use_fs=use_fs, 
+            use_or=use_or, 
+            fs_params=fs_params, 
+            or_params=or_params, 
+            station_name=station
+        )
+        
+        # Kumpulkan hasil log
+        #full_log_data.extend(station_metrics['logs'])
+
+        if station_metrics: # Hanya tambahkan jika evaluasi berhasil
+            results_per_station.append({
+                "Stasiun": station, 
+                "Rata-rata-RMSE": station_metrics['avg_rmse'],
+                "Rata-rata-R": station_metrics['avg_r2']
+            })
+            full_log_data.extend(station_metrics['logs'])
+        
+    # Kembalikan DUA objek: DataFrame hasil dan List log
+    return pd.DataFrame(results_per_station), full_log_data

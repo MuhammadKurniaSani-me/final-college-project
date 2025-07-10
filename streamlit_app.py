@@ -80,6 +80,10 @@ pg = st.navigation(
             st.Page("./pages/6_evaluation.py", title="Scenario Evaluation", icon=":material/timeline:"),
             st.Page("./pages/7_prediction.py", title="PM 2.5 Prediction", icon=":material/timeline:"),
             st.Page("./pages/8_conlusion.py", title="Conclusion", icon=":material/flag:"),
+            st.Page("./pages/9_scenario_4_evaluation.py", title="Scenario 4 Evaluation", icon=":material/filter_4:"),
+            st.Page("./pages/10_scenario_3_evaluation.py", title="Scenario 3 Evaluation", icon=":material/filter_3:"),
+            st.Page("./pages/11_scenario_2_evaluation.py", title="Scenario 2 Evaluation", icon=":material/filter_2:"),
+            st.Page("./pages/12_scenario_1_evaluation.py", title="Scenario 1 Evaluation", icon=":material/filter_1:"),
         ],
         # "Admin": [st.Page(page3, title="Settings", icon=":material/settings:")],
     }
