@@ -18,9 +18,9 @@ MODEL_PATH = os.path.join(MODEL_DIR, "final_arimax_model.pkl")
 # --- PERBAIKAN UTAMA DI SINI: MEMBUAT HALAMAN MANDIRI ---
 # Cek apakah data utama ada di sesi. Jika tidak, muat data default.
 if 'main_dataframe' not in st.session_state:
-    st.info("Memuat data default (Aotizhongxin) untuk sesi ini...", icon="ℹ️")
+    st.info("Memuat data default (Changping) untuk sesi ini...", icon="ℹ️")
     # Muat data dari stasiun default untuk mengisi nilai awal form
-    st.session_state.main_dataframe = utils.load_station_data('Aotizhongxin')
+    st.session_state.main_dataframe = utils.load_station_data('Changping')
 
 # Jika data gagal dimuat, hentikan aplikasi
 if st.session_state.main_dataframe is None:
@@ -58,11 +58,6 @@ if artifacts:
             else:
                 with st.spinner("Membuat peramalan..."):
                     exog_input = input_df.astype(float)
-                    
-                    # original_predictions, scaled_predictions = utils.predict_future_values(
-                    #     final_model=final_model, scaler=scaler, exog_input_df=exog_input,
-                    #     final_features=final_features, original_cols_for_scaler=final_features
-                    # )
 
                     original_predictions, scaled_predictions = utils.predict_future_values(
                         final_model=final_model,
@@ -91,7 +86,6 @@ if artifacts:
                     st.markdown(f"Untuk memprediksi **{n_periods} jam** ke depan, kami menampilkan **{historical_window_size} jam** data historis sebagai konteks.")
 
                     # 1. Ambil data historis dari DataFrame utama (SKALA ASLI)
-                    # Kita gunakan df_imputed untuk memastikan tidak ada NaN di plot
                     historical_data_unscaled = st.session_state.main_dataframe['PM2.5'].tail(historical_window_size)
                     
                     # 2. Reset indeks untuk mendapatkan sumbu-X numerik

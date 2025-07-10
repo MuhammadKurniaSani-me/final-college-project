@@ -783,7 +783,6 @@ def train_final_model_from_best_scenario(
     # Kembalikan semua artefak penting 
     return results, scaler, final_features, original_cols_for_scaling, final_order
 
-# Ganti seluruh fungsi predict_future_values dengan ini
 def predict_future_values(final_model, scaler, exog_input_df, final_features, target_variable='PM2.5'):
     """
     Membuat prediksi masa depan dan mengembalikannya ke skala asli (versi lebih robust).
@@ -820,7 +819,6 @@ def predict_future_values(final_model, scaler, exog_input_df, final_features, ta
     
     return original_predictions, forecast_mean_scaled
 
-# --- FUNGSI BARU UNTUK MEMUAT ARTEFAK ---
 @st.cache_resource(show_spinner="Memuat model dan artefak dari file...")
 def load_prediction_artifacts(artifacts_path='../models/prediction_artifacts.joblib'):
     """
@@ -833,7 +831,6 @@ def load_prediction_artifacts(artifacts_path='../models/prediction_artifacts.job
         return artifacts
     except FileNotFoundError:
         return None
-
 
 def _evaluate_single_station(raw_df, use_fs, use_or, fs_params, or_params, station_name):
     """
