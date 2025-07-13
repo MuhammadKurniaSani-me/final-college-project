@@ -1,7 +1,7 @@
 # pages/3_data_preprocessing.py
 import streamlit as st
 import pandas as pd
-import utils # Mengimpor file utilitas kita
+import utils # Mengimpor file utilitas utama Anda
 
 # --- KONFIGURASI HALAMAN ---
 st.set_page_config(page_title="Data Preprocessing", page_icon="⚙️", layout="wide")
@@ -13,78 +13,81 @@ Halaman ini mendemonstrasikan tiga langkah utama yang dilakukan: **Encoding**, *
 """)
 
 # --- KEAMANAN & PEMUATAN DATA DARI SESSION STATE ---
-if 'main_dataframe' not in st.session_state:
+if 'main_dataframe' not in st.session_state or st.session_state.main_dataframe is None:
     st.warning("🚨 Silakan pilih stasiun di halaman 'Ikhtisar Data' terlebih dahulu untuk memulai.")
+    st.page_link("pages/2_data_overview.py", label="Kembali ke Halaman Ikhtisar Data", icon="📊")
     st.stop()
 
 # Ambil data dari session state
-df_raw = st.session_state.main_dataframe.copy()
-# Ambil sampel data untuk demonstrasi yang lebih cepat
-df_sample = df_raw.copy()
-
-# --- PERUBAHAN DI SINI: DEFINISIKAN DAN HAPUS FITUR WAKTU ---
-time_features = ['year', 'month', 'day', 'hour']
-# Buat DataFrame baru yang hanya berisi fitur untuk diproses
-features_to_process = [col for col in df_sample.columns if col not in time_features]
-df_for_processing = df_sample[features_to_process]
-# --- AKHIR PERUBAHAN ---
+df_raw = st.session_state.main_dataframe
 
 st.info(f"Anda sedang bekerja dengan data dari stasiun: **{st.session_state.data_location}**")
-st.warning(f"Untuk tujuan demonstrasi, kami hanya menggunakan **{df_for_processing.shape[1]} fitur non-waktu** dan hanya menampilkan **1000 baris data awal**.", icon="💡")
 
 # --- Tombol untuk Menjalankan Pipeline ---
 if st.button("▶️ Jalankan Pipeline Preprocessing", type="primary", use_container_width=True):
     with st.spinner("Menjalankan proses..."):
-        station_names = st.session_state.get('locations_name', [st.session_state.data_location])
+        # Buat station code map
+        station_names = [
+            'Aotizhongxin', 'Changping', 'Dingling', 'Dongsi', 'Guanyuan', 'Gucheng', 
+            'Huairou', 'Nongzhanguan', 'Shunyi', 'Tiantan', 'Wanliu', 'Wanshouxigong'
+        ]
         station_code_map = {name: i + 1 for i, name in enumerate(station_names)}
 
-        # Gunakan 'df_for_processing' yang sudah difilter
         # Langkah 1: Encoding
-        st.session_state.df_encoded = utils.preprocess_encoding(df_for_processing, st.session_state.data_location, station_code_map)
+        df_encoded = utils.preprocess_encoding(df_raw, st.session_state.data_location, station_code_map)
+        st.session_state.df_encoded = df_encoded
+        
         # Langkah 2: Imputasi
-        st.session_state.df_imputed = utils.preprocess_impute(st.session_state.df_encoded)
+        df_imputed = utils.preprocess_impute(df_encoded)
+        st.session_state.df_imputed = df_imputed
+        
         # Langkah 3: Normalisasi
-        st.session_state.df_scaled, st.session_state.scaler = utils.preprocess_scale(st.session_state.df_imputed)
+        df_scaled, scaler = utils.preprocess_scale(df_imputed)
+        st.session_state.df_scaled = df_scaled
+        st.session_state.scaler = scaler # Simpan scaler untuk digunakan di halaman prediksi
+        
     st.success("Pipeline Preprocessing Selesai!")
 
 # --- Tampilan Hasil dengan TAB ---
 if 'df_scaled' in st.session_state:
-    # (Sisa kode untuk menampilkan tab tidak perlu diubah)
-    # Cukup pastikan data yang ditampilkan berasal dari df_for_processing atau session state yang sesuai
     tab1, tab2, tab3 = st.tabs(["**Langkah 1: Label Encoding**", "**Langkah 2: Imputasi Nilai Hilang**", "**Langkah 3: Normalisasi Min-Max**"])
 
     with tab1:
         st.header("Encoding Fitur Kategorikal", divider="blue")
-        st.markdown("Mengubah fitur non-numerik seperti arah angin (`wd`) dan nama stasiun (`station`) menjadi nilai numerik.")
+        st.markdown("Mengubah fitur non-numerik seperti arah angin (`wd`) menjadi nilai numerik. Perhatikan kolom `wd` sebelum dan sesudah proses.")
         
         col1, col2 = st.columns(2)
         with col1:
             st.subheader("Sebelum Encoding")
-            st.dataframe(df_for_processing.head(1000)) # Tampilkan 1000 data awal yang sudah difilter
+            st.dataframe(df_raw[['wd']].head())
         with col2:
             st.subheader("Sesudah Encoding")
-            st.dataframe(utils.highlight_encoded_and_na(st.session_state.df_encoded.head(1000), ['wd', 'station']))
+            st.dataframe(st.session_state.df_encoded[['wd']].head())
 
     with tab2:
         st.header("Mengisi Nilai yang Hilang (Imputasi)", divider="blue")
-        st.markdown("Menggunakan **interpolasi linear** untuk mengisi celah (nilai `NaN`) dalam data. Perhatikan bagaimana sel yang disorot merah menjadi terisi.")
+        st.markdown("Menggunakan **interpolasi linear** untuk mengisi celah (nilai `NaN`) dalam data. Di bawah ini adalah contoh efek imputasi pada kolom `PM2.5`.")
         
         col1, col2 = st.columns(2)
         with col1:
-            st.subheader("Sebelum Imputasi")
-            st.dataframe(utils.highlight_encoded_and_na(st.session_state.df_encoded.head(1000), []))
+            st.subheader("Sebelum Imputasi (Contoh Data NaN)")
+            # Tampilkan beberapa baris yang mengandung NaN pada PM2.5
+            st.dataframe(st.session_state.df_encoded[st.session_state.df_encoded['PM2.5'].isnull()].head())
         with col2:
             st.subheader("Sesudah Imputasi")
-            st.dataframe(st.session_state.df_imputed.head(1000).style.format("{:.2f}"))
+            # Tampilkan baris yang sama setelah diimputasi
+            st.dataframe(st.session_state.df_imputed.loc[st.session_state.df_encoded['PM2.5'].isnull().head().index])
 
     with tab3:
         st.header("Normalisasi Data dengan Min-Max Scaling", divider="blue")
-        st.markdown("Menskalakan semua nilai fitur ke dalam rentang **[0, 1]**. Ini memastikan tidak ada satu fitur pun yang mendominasi model hanya karena skalanya lebih besar.")
+        st.markdown("Menskalakan semua nilai fitur ke dalam rentang **[0, 1]**. Ini memastikan tidak ada satu fitur pun yang mendominasi model hanya karena skalanya lebih besar. Perhatikan bagaimana nilai pada kolom di bawah ini berubah dari skala aslinya menjadi nilai antara 0 dan 1.")
 
         col1, col2 = st.columns(2)
         with col1:
-            st.subheader("Sebelum Normalisasi")
-            st.dataframe(st.session_state.df_imputed.head(1000).style.format("{:.2f}"))
+            st.subheader("Sebelum Normalisasi (Data Asli)")
+            # Tampilkan preview dari beberapa kolom data sebelum di-scaling
+            st.dataframe(st.session_state.df_imputed[['PM10', 'CO', 'TEMP']].head())
         with col2:
-            st.subheader("Sesudah Normalisasi")
-            st.dataframe(utils.highlight_min_max(st.session_state.df_scaled.head(1000), precision=2))
+            st.subheader("Sesudah Normalisasi (Skala 0-1)")
+            # Tampilkan preview dari kolom yang sama setelah di-scaling
+            st.dataframe(st.session_state.df_scaled[['PM10', 'CO', 'TEMP']].head())

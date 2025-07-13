@@ -241,7 +241,7 @@ def calculate_vif(df):
     return vif_data.sort_values(by="Skor VIF", ascending=False).reset_index(drop=True)
 
 
-def rep_holdout_splitter(data, n_repetitions=10, train_percent=0.8, test_percent=0.1):
+def rep_holdout_splitter(data, n_repetitions=10, train_percent=0.6, test_percent=0.1):
     """
     Generator function to yield train/test splits using a sliding window approach.
     This more accurately reflects the repetition hold-out methodology.
