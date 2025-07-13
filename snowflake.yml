@@ -1,0 +1,21 @@
+# snowflake.yml
+definition_version: 1
+native_app:
+  name: my_prediction_app
+  artifacts:
+    - src: streamlit_app.py
+      dest: streamlit_app.py
+    - src: utils.py
+      dest: utils.py
+    - src: utils_for_made_model.py
+      dest: utils_for_made_model.py
+    - src: backup_utils.py
+      dest: backup_utils.py
+    - src: pages/
+      dest: pages/
+    - src: datas/
+      dest: datas/
+    - src: models/
+      dest: models/
+    - src: environment.yml
+      dest: environment.yml

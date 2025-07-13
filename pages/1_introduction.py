@@ -43,6 +43,7 @@ def introduction_key_points():
             )
             if st.button("5 Kota Paling Berpolusi", key="b1"):
                 # Di aplikasi nyata, ini dapat menavigasi atau menampilkan data
+                # https://www.iqair.com/world-air-quality-ranking
                 st.info("Menampilkan 5 kota paling berpolusi...") 
 
     # --- Kartu 2 ---
@@ -53,6 +54,7 @@ def introduction_key_points():
                 "Data runtun waktu untuk kualitas udara terus bertambah volumenya dan dipengaruhi oleh banyak faktor eksternal yang kompleks."
             )
             if st.button("Lihat Kompleksitas Data", key="b2"):
+                # https://doi.org/10.24432/C5RK5G
                 st.info("Menampilkan faktor-faktor kompleksitas data...")
 
     # --- Kartu 3 ---
@@ -63,6 +65,7 @@ def introduction_key_points():
                 "Model ARIMA sederhana namun kuat. Model ini dapat diperluas menjadi ARIMAX atau SARIMA untuk menyertakan faktor musiman dan eksternal."
             )
             if st.button("Jelajahi Model", key="b3"):
+                # https://medium.com/analytics-vidhya/a-thorough-introduction-to-arima-models-987a24e9ff71
                 st.info("Menampilkan berbagai model runtun waktu...")
 
     # --- Kartu 4 ---
@@ -73,6 +76,7 @@ def introduction_key_points():
                 "Pendekatan modern sering menggabungkan model (metode hybrid) atau menggunakan pra-pemrosesan canggih untuk meningkatkan akurasi peramalan."
             )
             if st.button("Pelajari Metode Hybrid", key="b4"):
+                # https://doi.org/10.1016/j.heliyon.2023.e13483
                 st.info("Menampilkan contoh metode hybrid...")
 
 

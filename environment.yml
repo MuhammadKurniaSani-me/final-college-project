@@ -1,0 +1,56 @@
+name: sf_env
+channels:
+  - snowflake
+dependencies:
+  - streamlit
+  - altair
+  - attrs
+  - blinker
+  - cachetools
+  - certifi
+  - charset-normalizer
+  - click
+  - contourpy
+  - cycler
+  - fonttools
+  - gitdb
+  # - gitpython
+  - idna
+  - jinja2
+  - joblib
+  - jsonschema
+  - jsonschema-specifications
+  - kiwisolver
+  - markupsafe
+  - matplotlib
+  - narwhals
+  - numpy
+  - packaging
+  - pandas
+  - patsy
+  - pillow
+  - plotly
+  - protobuf
+  - pyarrow
+  - pydeck
+  - pyparsing
+  - python-dateutil
+  - pytz
+  - referencing
+  - requests
+  - rpds-py
+  - scikit-learn
+  - scipy
+  - seaborn
+  - six
+  - smmap
+  - statsmodels
+  - streamlit
+  - tenacity
+  - threadpoolctl
+  - toml
+  - tornado
+  - typing-extensions
+  - tzdata
+  - urllib3
+
