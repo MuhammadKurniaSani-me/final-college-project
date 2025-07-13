@@ -1,16 +1,15 @@
 # pages/4_statistical_significance.py
 import streamlit as st
 import pandas as pd
-import utils # Mengimpor file utilitas kita
+import utils 
 
 # --- KONFIGURASI HALAMAN ---
 st.set_page_config(page_title="Signifikansi Statistik", page_icon="🔬", layout="wide")
 
 st.title("🔬 Alur Seleksi Fitur Sekuensial")
 st.markdown("""
-Halaman ini mendemonstrasikan proses seleksi fitur dua tahap secara berurutan:
-1.  **Seleksi Korelasi:** Memilih fitur yang memiliki hubungan linear kuat dengan target (PM2.5).
-2.  **Seleksi VIF:** Menghapus fitur dengan multikolinearitas tinggi dari hasil tahap pertama.
+Pada tahap ini, kita melakukan seleksi fitur untuk memilih variabel yang paling signifikan dan relevan untuk model peramalan. 
+Tujuannya adalah untuk meningkatkan performa model dengan mengurangi *noise* (fitur yang tidak relevan) dan multikolinearitas (fitur yang terlalu mirip satu sama lain).
 """)
 
 # --- KEAMANAN & PEMUATAN DATA DARI SESSION STATE ---
@@ -19,7 +18,7 @@ if 'df_scaled' not in st.session_state:
     st.page_link("pages/3_data_preprocessing.py", label="Kembali ke Halaman Preprocessing", icon="⚙️")
     st.stop()
 
-# Ambil data yang sudah diimputasi dan difilter dari session state
+# Ambil data yang sudah diskalakan dari session state
 df_scaled = st.session_state.df_scaled
 
 # --- KONTROL PENGGUNA DI SIDEBAR ---
@@ -54,7 +53,12 @@ tab1, tab2, tab3 = st.tabs(["**Tahap 1: Seleksi Korelasi**", "**Tahap 2: Seleksi
 
 with tab1:
     st.header("Seleksi Berdasarkan Korelasi dengan PM2.5", divider="blue")
-    st.markdown(f"Ambang batas yang digunakan: **Korelasi Absolut ≥ {corr_threshold}**")
+    st.markdown(f"""
+    Langkah pertama adalah menemukan fitur yang memiliki hubungan linear paling kuat dengan target kita, yaitu **PM2.5**. Kita menggunakan **Korelasi Pearson** untuk ini. Fitur dengan korelasi absolut di bawah ambang batas **{corr_threshold}** dianggap tidak cukup relevan dan akan dihapus.
+    
+    - **Latar Hijau:** Fitur lolos seleksi.
+    - **Latar Merah:** Fitur tidak lolos seleksi.
+    """)
 
     corr_df_display = corr_with_target.reset_index()
     corr_df_display.columns = ['Fitur', 'Korelasi Absolut dengan PM2.5']
@@ -63,23 +67,23 @@ with tab1:
         color = '#E8F5E9' if val >= threshold else '#FFCDD2'
         return f'background-color: {color}'
 
-    # --- PERUBAHAN DI BARIS INI ---
     styled_corr_df = corr_df_display.style.apply(
         lambda x: x.map(lambda v: highlight_corr(v, corr_threshold)), subset=['Korelasi Absolut dengan PM2.5']
-    ).format(
-        "{:.3f}", subset=['Korelasi Absolut dengan PM2.5']  # Terapkan format HANYA pada kolom ini
-    )
-    # --- AKHIR PERUBAHAN ---
-
+    ).format("{:.3f}", subset=['Korelasi Absolut dengan PM2.5'])
+    
     st.dataframe(styled_corr_df, use_container_width=True)
 
     st.subheader(f"Hasil Tahap 1: {len(features_passed_corr)} Fitur Lolos")
-    st.success(f"Fitur yang lolos untuk dianalisis VIF: **{', '.join(features_passed_corr) if features_passed_corr else 'Tidak ada'}**")
+    st.success(f"Fitur yang akan dianalisis lebih lanjut di tahap VIF: **{', '.join(features_passed_corr) if features_passed_corr else 'Tidak ada'}**")
 
-# ... (Sisa kode di Tab 2 dan Tab 3 tidak perlu diubah dan sudah benar) ...
 with tab2:
-    st.header("Seleksi Berdasarkan VIF", divider="blue")
-    st.markdown(f"Analisis VIF dilakukan hanya pada **{len(features_passed_corr)} fitur** yang lolos tahap 1. Ambang batas VIF: **≤ {vif_threshold}**.")
+    st.header("Seleksi Berdasarkan VIF (Multikolinearitas)", divider="blue")
+    st.markdown(f"""
+    Langkah kedua adalah menangani **multikolinearitas**, yaitu kondisi di mana beberapa fitur independen saling berkorelasi tinggi satu sama lain. Ini dapat mengganggu model. Kita menggunakan **Variance Inflation Factor (VIF)** untuk mengukurnya. Fitur dengan skor VIF di atas ambang batas **{vif_threshold}** akan dihapus.
+    
+    - **Latar Hijau:** Fitur lolos seleksi (VIF rendah).
+    - **Latar Merah:** Fitur tidak lolos seleksi (VIF tinggi).
+    """)
 
     if not features_passed_corr:
         st.warning("Tidak ada fitur yang lolos tahap 1 untuk dianalisis VIF.")
@@ -102,8 +106,11 @@ with tab3:
     with col1:
         with st.container(border=True):
             st.subheader(f"✅ Fitur Final Dipertahankan ({len(final_features)})")
-            st.success(", ".join(final_features) or "Tidak ada fitur yang lolos seleksi.")
-# check
+            if final_features:
+                st.success(", ".join(final_features))
+            else:
+                st.warning("Tidak ada fitur yang lolos seleksi.")
+            
     with col2:
         with st.container(border=True):
             st.subheader("❌ Fitur yang Dihapus")
@@ -114,6 +121,6 @@ with tab3:
                 st.markdown("**Tahap 2 (VIF Tinggi):**")
                 st.error(f"{', '.join(features_failed_vif)}")
             if not features_failed_corr and not features_failed_vif:
-                st.info("Tidak ada fitur yang dihapus.")
+                st.info("Tidak ada fitur yang dihapus berdasarkan ambang batas saat ini.")
 
-    st.info("Fitur final yang dipertahankan ini akan digunakan pada tahap pemodelan selanjutnya.", icon="💡")
+    st.info("Fitur final yang dipertahankan ini akan disimpan dan digunakan pada tahap pemodelan selanjutnya.", icon="💡")
