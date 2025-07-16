@@ -595,3 +595,50 @@ def inverse_transform_predictions(scaled_predictions, scaler, all_feature_names,
     original_scale_predictions = inversed_df[:, target_idx]
     
     return original_scale_predictions
+
+def get_air_quality_advice(pm25_value):
+    """
+    Memberikan kategori kualitas udara dan rekomendasi berdasarkan nilai PM2.5 (µg/m³).
+    Versi ini sekarang menangani nilai negatif sebagai kasus khusus.
+    """
+    # --- TAMBAHAN: Penanganan Nilai Negatif ---
+    if pm25_value < 0:
+        level = "Error Prediksi"
+        emoji = "⚠️"
+        recommendation = "Error sistem. Gunakan prediksi jam berikutnya sebagai acuan."
+        color = "gray"
+        return f"{emoji} {level}", recommendation, color
+    # --- AKHIR TAMBAHAN ---
+
+    elif 0 <= pm25_value <= 12.0:
+        level = "Baik"
+        emoji = "😊"
+        recommendation = "Nikmati aktivitas di luar ruangan."
+        color = "green"
+    elif 12.1 <= pm25_value <= 35.4:
+        level = "Sedang"
+        emoji = "😐"
+        recommendation = "Orang sensitif mungkin mengalami gejala pernapasan."
+        color = "yellow"
+    elif 35.5 <= pm25_value <= 55.4:
+        level = "Tidak Sehat bagi Kelompok Sensitif"
+        emoji = "😷"
+        recommendation = "Hanya orang sensitif yang harus mengurangi aktivitas berat di luar ruangan."
+        color = "orange"
+    elif 55.5 <= pm25_value <= 150.4:
+        level = "Tidak Sehat"
+        emoji = "🤢"
+        recommendation = "Batasi aktivitas di luar (Semua kalangan)"
+        color = "red"
+    elif 150.5 <= pm25_value <= 250.4:
+        level = "Sangat Tidak Sehat"
+        emoji = "🤮"
+        recommendation = "Hindari semua aktivitas di luar ruangan (DARURAT!)"
+        color = "purple"
+    else: # pm25_value > 250.4
+        level = "Berbahaya"
+        emoji = "💀"
+        recommendation = "Jangan aktivitas di luar ruangan (LARANGAN!)"
+        color = "maroon"
+        
+    return f"{emoji} {level}", recommendation, color
