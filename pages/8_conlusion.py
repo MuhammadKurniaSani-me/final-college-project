@@ -1,74 +1,73 @@
 # pages/8_conclusion.py
 import streamlit as st
 
-# --- PAGE CONFIGURATION ---
-st.set_page_config(page_title="Conclusion", page_icon="🏁", layout="wide")
+# --- KONFIGURASI HALAMAN ---
+st.set_page_config(page_title="Kesimpulan", page_icon="🏁", layout="wide")
 
-# --- PAGE TITLE ---
-st.title("🏁 Conclusion & Project Summary")
-st.markdown("This page summarizes the final findings of the PM2.5 forecasting project, presenting the results from the best-performing model and discussing its implications and future potential.")
+# --- JUDUL HALAMAN ---
+st.title("🏁 Kesimpulan & Ringkasan Proyek")
+st.markdown("Halaman ini merangkum temuan akhir dari proyek peramalan PM2.5, menyajikan hasil dari model dengan performa terbaik, serta membahas implikasi dan potensi pengembangannya di masa depan.")
 st.divider()
 
-# --- KEY FINDINGS (HARDCODED SECTION) ---
-st.header("🏆 Key Findings & Best Model Performance")
+# --- TEMUAN UTAMA (BAGIAN HARDCODED) ---
+st.header("🏆 Temuan Utama & Performa Model Terbaik")
 
 # --- UPDATE THESE VALUES WITH YOUR FINAL RESULTS ---
 
-# The name of your best-performing scenario.
+# Nama skenario terbaik Anda.
 best_scenario_name = "Skenario 4: Seleksi Fitur & Penghapusan Outlier"
 
-# The final performance metrics for the best scenario.
-best_rmse = 0.0259
-best_r2 = 0.5139
+# Metrik performa final dari skenario terbaik.
+best_rmse = 0.0339
+best_r2 = 0.7508
 
-# The final list of features used by the best model.
-# (Update this list based on your final feature selection results)
+# Daftar fitur final yang digunakan oleh model terbaik Anda.
 final_features_list = ['PM10', 'SO2', 'NO2', 'CO', 'O3', 'TEMP', 'PRES', 'DEWP', 'WSPM']
 
-# --- END OF HARDCODED SECTION ---
+# --- AKHIR BAGIAN HARDCODED ---
 
 
-# Display the static conclusion
-st.success(f"Based on a comprehensive evaluation, **{best_scenario_name}** was identified as the most optimal modeling approach.")
+# Tampilkan kesimpulan statis
+st.success(f"Berdasarkan evaluasi yang komprehensif, **{best_scenario_name}** teridentifikasi sebagai pendekatan pemodelan yang paling optimal.")
 
-# Display the primary metrics for the best scenario
+# Tampilkan metrik utama dari skenario terbaik
 col1, col2, col3 = st.columns(3)
-col1.metric("Best Scenario", best_scenario_name)
-col2.metric("Final Average RMSE", f"{best_rmse:.4f}", help="Lower is better.")
-col3.metric("Final Average R² Score", f"{best_r2:.4f}", help="Higher (closer to 1) is better.")
+col1.metric("Skenario Terbaik", best_scenario_name)
+col2.metric("Rata-rata RMSE Final", f"{best_rmse:.4f}", help="Lebih rendah lebih baik.")
+col3.metric("Rata-rata R² Score Final", f"{best_r2:.4f}", help="Lebih tinggi (mendekati 1) lebih baik.")
 
-# Display the final features used
-st.info(f"**Final Features Used by Model:** `{', '.join(final_features_list)}`", icon="✅")
+# Tampilkan fitur final yang digunakan
+st.info(f"**Fitur Final yang Digunakan Model:** `{', '.join(final_features_list)}`", icon="✅")
 
 st.divider()
 
-# --- IMPLICATIONS & LIMITATIONS ---
-col_implications, col_limitations = st.columns(2)
+# --- IMPLIKASI & KETERBATASAN ---
+col_implikasi, col_keterbatasan = st.columns(2)
 
-with col_implications:
+with col_implikasi:
     with st.container(border=True):
-        st.subheader("💡 Implications & Benefits")
+        st.subheader("💡 Implikasi & Manfaat")
         st.markdown("""
-        - **Early Warning System:** The developed model can serve as a basis for an early warning system for air quality in the relevant area.
-        - **Policy Insights:** Feature analysis provides policymakers with insights into which pollutants are most influential and should be prioritized.
-        - **Academic Contribution:** The comprehensive preprocessing methodology quantitatively demonstrates that feature selection and outlier removal can significantly improve model accuracy.
+        - **Sistem Peringatan Dini:** Model yang dikembangkan dapat menjadi dasar bagi sistem peringatan dini kualitas udara untuk masyarakat di area terkait.
+        - **Wawasan Kebijakan:** Analisis fitur memberikan wawasan bagi pembuat kebijakan mengenai polutan mana yang paling berpengaruh dan perlu diprioritaskan dalam penanganan.
+        - **Kontribusi Akademis:** Metodologi prapemrosesan yang komprehensif secara kuantitatif menunjukkan bahwa seleksi fitur dan penghapusan outlier dapat meningkatkan akurasi model secara signifikan.
         """)
 
-with col_limitations:
+with col_keterbatasan:
     with st.container(border=True):
-        st.subheader("⚠️ Model Limitations")
+        st.subheader("⚠️ Keterbatasan Model")
         st.markdown("""
-        - **Single-City Data:** The model was trained exclusively on data from Beijing, limiting its generalizability to other cities.
-        - **Unforeseen Events:** The ARIMAX model may struggle to predict extreme pollution spikes caused by unexpected events (e.g., large wildfires).
-        - **Linearity Assumption:** The underlying ARIMA model assumes linear relationships, whereas real-world pollution dynamics can be highly non-linear.
+        - **Data Satu Kota:** Model dilatih secara eksklusif pada data dari Beijing, sehingga generalisasinya ke kota lain mungkin terbatas.
+        - **Kejadian Tak Terduga:** Model ARIMAX mungkin kesulitan memprediksi lonjakan polusi ekstrem yang disebabkan oleh kejadian tak terduga (misalnya, kebakaran hutan besar).
+        - **Asumsi Linearitas:** Model ARIMA pada dasarnya mengasumsikan adanya hubungan linear, sementara dinamika polusi di dunia nyata bisa jadi sangat non-linear.
         """)
 
-# --- FUTURE DEVELOPMENT ---
-st.header("🚀 Future Development Directions")
-with st.expander("Click to see ideas for future work"):
+# --- ARAH PENGEMBANGAN SELANJUTNYA ---
+st.header("🚀 Arah Pengembangan Selanjutnya")
+with st.expander("Klik untuk melihat ide-ide pengembangan di masa depan"):
     st.markdown("""
-    1.  **Advanced Models:** Implement deep learning models like **LSTM (Long Short-Term Memory)** or **Transformers** to better capture non-linear patterns.
-    2.  **Additional Data Sources:** Integrate data from satellite imagery (Aerosol Optical Depth), traffic data, or industrial activity to enrich the exogenous features.
-    3.  **Real-time Deployment:** Develop the system into a real-time application that automatically fetches the latest data and provides hourly forecasts.
-    4.  **Multi-City Analysis:** Expand the analysis to compare and model air quality across multiple cities to discover more generalizable patterns.
+    1.  **Model Tingkat Lanjut:** Mengimplementasikan model *deep learning* seperti **LSTM (Long Short-Term Memory)** atau **Transformer** untuk menangkap pola non-linear jangka panjang dengan lebih baik.
+    2.  **Sumber Data Tambahan:** Mengintegrasikan data tambahan seperti citra satelit (Aerosol Optical Depth), data lalu lintas, atau data aktivitas industri untuk memperkaya fitur eksogen.
+    3.  **Implementasi Real-time:** Mengembangkan sistem menjadi aplikasi yang berjalan secara *real-time*, mengambil data terbaru secara otomatis dan memberikan peramalan setiap jam.
+    4.  **Analisis Multi-Kota:** Memperluas analisis untuk membandingkan dan memodelkan kualitas udara di beberapa kota secara bersamaan untuk menemukan pola yang lebih umum.
     """)

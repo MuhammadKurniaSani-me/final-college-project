@@ -35,7 +35,7 @@ final_features = artifacts['final_features']
 
 # Muat data penuh untuk digunakan sebagai sumber nilai eksogen
 if 'main_dataframe_full' not in st.session_state:
-    st.session_state.main_dataframe_full = utils_for_made_model.load_full_station_data('Aotizhongxin')
+    st.session_state.main_dataframe_full = utils_for_made_model.load_station_data('Aotizhongxin')
     if st.session_state.main_dataframe_full is None:
         st.error("Gagal memuat data. Periksa path file di utils_for_made_model.py.")
         st.stop()
