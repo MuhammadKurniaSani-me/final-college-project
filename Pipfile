@@ -7,12 +7,12 @@ name = "pypi"
 streamlit = "*"
 matplotlib = "*"
 seaborn = "*"
-plotly = "*"
 statsmodels = "*"
 pandas = "*"
 scikit-learn = "*"
 scipy = "*"
 plotly-express = "*"
+plotly = "*"
 
 [dev-packages]
 
