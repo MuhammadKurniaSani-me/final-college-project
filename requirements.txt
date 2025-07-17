@@ -52,12 +52,12 @@
 
 # uncomment this before push to GitHub 
 # only streamlit cloud support this import module style
-# streamlit
-# pandas
-# numpy
-# scikit-learn
-# matplotlib
-# seaborn
-# plotly
-# statsmodels
-# joblib
+streamlit
+pandas
+numpy
+scikit-learn
+matplotlib
+seaborn
+plotly
+statsmodels
+joblib
