@@ -12,6 +12,7 @@ statsmodels = "*"
 pandas = "*"
 scikit-learn = "*"
 scipy = "*"
+plotly-express = "*"
 
 [dev-packages]
 
