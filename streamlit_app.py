@@ -2,7 +2,7 @@ import streamlit as st
 
 st.set_page_config(layout="wide")
 
-st.title('Time Series Analysis with Statistical Significance, Clustering, ARIMA')
+st.title('Prediksi _Particulate Matter_ 2.5 dengan Metode _Statistical Significance_, _Clustering_, ARIMA')
 
 with st.expander('About this app'):
   app_description = """This app contains analysis process for my final college project (Skripsi) focusing on time series analysis using an ARIMA model, with data preprocessing techniques, including statistical feature selection and cluster-based outlier detection. The primary goal of this project is to build a robust model for a given time series dataset (e.g., PM2.5 air quality)."""
@@ -10,7 +10,7 @@ with st.expander('About this app'):
   st.write(app_description)
   st.link_button("Check My GitHub", "https://github.com/MuhammadKurniaSani-me/final-college-project")
 
-if st.checkbox("Enable CSS hacks", True):
+if st.checkbox("Tema terinspirasi oleh www.anthropic.com", True):
     
     titleFontSize = "40px"
     titleFontWeight = "500"
@@ -77,21 +77,16 @@ pg = st.navigation(
             st.Page("./pages/3_data_preprocessing.py", title="Preprocessing", icon=":material/tune:"),
             st.Page("./pages/4_statistical_significance.py", title="Statistical Significance", icon=":material/functions:"),
             st.Page("./pages/5_outlier_removal.py", title="Outlier Removal", icon=":material/filter_alt_off:"),
-            # st.Page("./pages/6_evaluation.py", title="Scenario Evaluation", icon=":material/timeline:"),
             st.Page("./pages/7_prediction.py", title="PM 2.5 Prediction", icon=":material/timeline:"),
             st.Page("./pages/8_conlusion.py", title="Conclusion", icon=":material/flag:"),
             # st.Page("./pages/9_scenario_4_evaluation.py", title="Scenario 4 Evaluation", icon=":material/filter_4:"),
             # st.Page("./pages/10_scenario_3_evaluation.py", title="Scenario 3 Evaluation", icon=":material/filter_3:"),
             # st.Page("./pages/11_scenario_2_evaluation.py", title="Scenario 2 Evaluation", icon=":material/filter_2:"),
             # st.Page("./pages/12_scenario_1_evaluation.py", title="Scenario 1 Evaluation", icon=":material/filter_1:"),
-            # st.Page("./pages/13_prediction_full.py", title="Prediction", icon=":material/timeline:"),
-            # st.Page("./pages/14_auto_prediction.py", title="Auto Prediction", icon=":material/timeline:"),
-            # st.Page("./pages/15_in_sample_fit.py", title="Auto Prediction", icon=":material/timeline:"),
         ],
         # "Admin": [st.Page(page3, title="Settings", icon=":material/settings:")],
     }
 )
-
 
 pg.run()
 
