@@ -21,7 +21,7 @@ def introduction_section():
         st.write("_Towards Federated Learning and Multi-Access Edge Computing for Air Quality Monitoring: Literature Review and Assessment_")
     with col2:
         st.page_link("https://doi.org/10.1007/s10462-023-10424-4", label="Méndez et al. (2023)", icon="🔗")
-        st.write("_Machine learning algorithms to forecast air quality: a survey_G")
+        st.write("_Machine learning algorithms to forecast air quality: a survey_")
     
     st.divider()
 
@@ -46,9 +46,9 @@ def introduction_key_points():
     # --- Kartu 2 ---
     with col2:
         with st.container(border=True, height=300):
-            st.markdown("##### ⏳ Data Runtun Waktu yang Kompleks")
+            st.markdown("##### ⏳ Data _Time Series_ yang Kompleks")
             st.write(
-                "Data runtun waktu untuk kualitas udara terus bertambah volumenya dan dipengaruhi oleh banyak faktor eksternal yang kompleks."
+                "Data _time series_ terus bertambah volumenya dan dipengaruhi oleh banyak faktor eksternal yang kompleks (data berbentuk tabel dengan baris dan kolom yang sangat banyak)"
             )
             # PERUBAHAN: Menggunakan st.link_button untuk tautan eksternal
             st.link_button("Lihat Dataset", "https://doi.org/10.24432/C5RK5G", use_container_width=True)
@@ -58,7 +58,7 @@ def introduction_key_points():
         with st.container(border=True, height=300):
             st.markdown("##### ⚙️ Model ARIMA yang Kuat")
             st.write(
-                "Model ARIMA sederhana namun kuat. Model ini dapat diperluas menjadi ARIMAX atau SARIMA untuk menyertakan faktor musiman dan eksternal."
+                "Model AR, I, MA, menjadi ARIMA yang sederhana namun kuat. Model ini dapat diperluas menjadi ARIMAX untuk menyertakan data dengan kolom tabel yang banyak (_exogenous_) dilambangkan 'X'."
             )
             # PERUBAHAN: Menggunakan st.link_button untuk tautan eksternal
             st.link_button("Pengantar Model ARIMA", "https://medium.com/analytics-vidhya/a-thorough-introduction-to-arima-models-987a24e9ff71", use_container_width=True)
@@ -68,7 +68,7 @@ def introduction_key_points():
         with st.container(border=True, height=300):
             st.markdown("##### 🧩 Metode Hybrid & Ensemble")
             st.write(
-                "Pendekatan modern sering menggabungkan model (metode hybrid) atau menggunakan pra-pemrosesan canggih untuk meningkatkan akurasi peramalan."
+                "ARIMA sering digabungkan dengan metode lain (_statistical significance_ & _clustering_) disebut metode hybrid untuk meningkatkan akurasi."
             )
             # PERUBAHAN: Menggunakan st.link_button untuk tautan eksternal
             st.link_button("Baca Paper Terkait", "https://doi.org/10.1016/j.heliyon.2023.e13483", use_container_width=True)
