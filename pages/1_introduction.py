@@ -2,15 +2,15 @@
 import streamlit as st
 
 # Atur konfigurasi halaman untuk tampilan yang konsisten
-st.set_page_config(page_title="Introduction", page_icon="👋", layout="wide")
+st.set_page_config(page_title="Pengantar", page_icon="👋", layout="wide")
 
 def introduction_section():
     """
     Menampilkan bagian pengantar utama dengan konteks historis dan tautan referensi.
     """
-    st.header("Sejarah Analisis Runtun Waktu", divider="grey")
+    st.header("Sejarah Kegiatan Prediksi (_Forcasting_)", divider="grey")
     st.markdown("""
-    Sejak awal tahun 1990-an, analisis data runtun waktu, terutama yang berkaitan dengan kualitas udara, telah menjadi bidang penelitian yang signifikan. 
+    Sejak awal tahun 1990-an, prediksi (_forcasting_) pada data runtun waktu (_time series_), terutama yang berkaitan dengan kualitas udara, telah menjadi bidang penelitian yang signifikan. 
     Model-model awal telah membuka jalan bagi teknik-teknik yang lebih canggih yang digunakan saat ini. Di bawah ini adalah beberapa studi modern relevan yang dibangun di atas sejarah ini.
     """)
     
@@ -18,10 +18,11 @@ def introduction_section():
     col1, col2 = st.columns(2)
     with col1:
         st.page_link("https://doi.org/10.3390/su151813951", label="Abimannan et al. (2023)", icon="🔗")
+        st.write("_Towards Federated Learning and Multi-Access Edge Computing for Air Quality Monitoring: Literature Review and Assessment_")
     with col2:
-        st.page_link("https://doi.org/10.1007/s10462-023-10424-4", label="Méndez et al. (2023)", icon="💡")
+        st.page_link("https://doi.org/10.1007/s10462-023-10424-4", label="Méndez et al. (2023)", icon="🔗")
+        st.write("_Machine learning algorithms to forecast air quality: a survey_G")
     
-    # Menggunakan st.divider() untuk pemisah visual yang bersih
     st.divider()
 
 def introduction_key_points():
@@ -72,12 +73,23 @@ def introduction_key_points():
             # PERUBAHAN: Menggunakan st.link_button untuk tautan eksternal
             st.link_button("Baca Paper Terkait", "https://doi.org/10.1016/j.heliyon.2023.e13483", use_container_width=True)
 
+def display_footer():
+    """Menampilkan footer dengan informasi penulis dan institusi."""
+    st.divider()
+    st.markdown("""
+    <div style="text-align: center; font-size: 0.9em; color: grey;">
+        <p><b>Author:</b> Muhammad Kurnia Sani | <b>NIM:</b> 20.04.111.046</p>
+        <p><b>Dosen Pembimbing:</b> (1) Dr. Rika Yunitarini, S.T., M.T. & (2) Kurniawan Eka Permana, S.Kom., M.Sc</p>
+        <p><b>Dosen Penguji:</b> (1) Dr. Fika Hastarita Rachman, ST., M.Eng | (2) Moch. Kautsar Sophan, S.Kom., M.MT. | (3) Andharini Dwi Cahyani, S.Kom., M.Kom.,Ph.D</p>
+        <p>Program Studi Teknik Informatika - Fakultas Teknik - Universitas Trunojoyo Madura</p>
+    </div>
+    """, unsafe_allow_html=True)
 
 # --- Eksekusi Utama Halaman ---
-st.title("👋 Pengantar Peramalan Kualitas Udara")
-st.write("Halaman ini memberikan gambaran umum mengenai konteks dan konsep kunci dalam proyek analisis dan peramalan kualitas udara.")
-st.divider()
+st.title("👋 Pengantar")
+st.write("Halaman ini memberikan gambaran umum mengenai konteks dan konsep kunci dalam proyek prediksi PM 2.5.")
 
 # Menampilkan konten
 introduction_section()
 introduction_key_points()
+display_footer()
