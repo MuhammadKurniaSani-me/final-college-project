@@ -6,10 +6,10 @@ import utils # Mengimpor file utilitas utama Anda
 # --- KONFIGURASI HALAMAN ---
 st.set_page_config(page_title="Data Preprocessing", page_icon="⚙️", layout="wide")
 
-st.title("⚙️ Proses Prapemrosesan Data")
+st.title("⚙️ _Preprocessing_ Data")
 st.markdown("""
-Prapemrosesan adalah langkah krusial untuk membersihkan, mengubah, dan menyiapkan data mentah agar siap digunakan untuk pemodelan. 
-Halaman ini mendemonstrasikan tiga langkah utama yang dilakukan: **Encoding**, **Imputasi Nilai Hilang**, dan **Normalisasi**.
+_Preprocessing_ adalah langkah krusial untuk membersihkan, mengubah, dan menyiapkan data performa sistem lebih baik. 
+Halaman ini mendemonstrasikan tiga langkah utama yang dilakukan: **Encoding**, **Imputation**, dan **Normalization**.
 """)
 
 # --- KEAMANAN & PEMUATAN DATA DARI SESSION STATE ---
@@ -50,44 +50,44 @@ if st.button("▶️ Jalankan Pipeline Preprocessing", type="primary", use_conta
 
 # --- Tampilan Hasil dengan TAB ---
 if 'df_scaled' in st.session_state:
-    tab1, tab2, tab3 = st.tabs(["**Langkah 1: Label Encoding**", "**Langkah 2: Imputasi Nilai Hilang**", "**Langkah 3: Normalisasi Min-Max**"])
+    tab1, tab2, tab3 = st.tabs(["**Langkah 1: Label Encoding**", "**Langkah 2: Missing Values Imputation**", "**Langkah 3: Min-Max Normalization**"])
 
     with tab1:
-        st.header("Encoding Fitur Kategorikal", divider="blue")
+        st.header("Encoding _feature_ (kolom tabel) Kategorikal (data non-numerik)", divider="blue")
         st.markdown("Mengubah fitur non-numerik seperti arah angin (`wd`) menjadi nilai numerik. Perhatikan kolom `wd` sebelum dan sesudah proses.")
         
         col1, col2 = st.columns(2)
         with col1:
-            st.subheader("Sebelum Encoding")
+            st.subheader("Sebelum _encoding_")
             st.dataframe(df_raw[['wd']].head())
         with col2:
-            st.subheader("Sesudah Encoding")
+            st.subheader("Sesudah _encoding_")
             st.dataframe(st.session_state.df_encoded[['wd']].head())
 
     with tab2:
-        st.header("Mengisi Nilai yang Hilang (Imputasi)", divider="blue")
-        st.markdown("Menggunakan **interpolasi linear** untuk mengisi celah (nilai `NaN`) dalam data. Di bawah ini adalah contoh efek imputasi pada kolom `PM2.5`.")
+        st.header("Mengisi Nilai yang Hilang (_Missing Values Imputation_)", divider="blue")
+        st.markdown("Menggunakan **interpolasi linear** untuk mengisi _missing value_ (`NaN`) dalam data. Di bawah ini adalah contoh efek imputasi pada kolom `PM2.5`.")
         
         col1, col2 = st.columns(2)
         with col1:
-            st.subheader("Sebelum Imputasi (Contoh Data NaN)")
+            st.subheader("Sebelum _imputation_ (Contoh Data NaN)")
             # Tampilkan beberapa baris yang mengandung NaN pada PM2.5
             st.dataframe(st.session_state.df_encoded[st.session_state.df_encoded['PM2.5'].isnull()].head())
         with col2:
-            st.subheader("Sesudah Imputasi")
+            st.subheader("Sesudah _imputation_")
             # Tampilkan baris yang sama setelah diimputasi
             st.dataframe(st.session_state.df_imputed.loc[st.session_state.df_encoded['PM2.5'].isnull().head().index])
 
     with tab3:
-        st.header("Normalisasi Data dengan Min-Max Scaling", divider="blue")
-        st.markdown("Menskalakan semua nilai fitur ke dalam rentang **[0, 1]**. Ini memastikan tidak ada satu fitur pun yang mendominasi model hanya karena skalanya lebih besar. Perhatikan bagaimana nilai pada kolom di bawah ini berubah dari skala aslinya menjadi nilai antara 0 dan 1.")
+        st.header("_Min-Max Normalization_", divider="blue")
+        st.markdown("Menyeimbangkan skala semua nilai ke dalam rentang **[0, 1]**. Ini memastikan tidak ada satu fitur pun yang mendominasi model hanya karena skalanya lebih besar. Perhatikan bagaimana nilai pada kolom di bawah ini berubah sebelum dan sesudah _Min-Max normalization_.")
 
         col1, col2 = st.columns(2)
         with col1:
-            st.subheader("Sebelum Normalisasi (Data Asli)")
+            st.subheader("Sebelum _normalization_ (Data Asli)")
             # Tampilkan preview dari beberapa kolom data sebelum di-scaling
             st.dataframe(st.session_state.df_imputed[['PM10', 'CO', 'TEMP']].head())
         with col2:
-            st.subheader("Sesudah Normalisasi (Skala 0-1)")
+            st.subheader("Sesudah _normalization_ (Skala 0-1)")
             # Tampilkan preview dari kolom yang sama setelah di-scaling
             st.dataframe(st.session_state.df_scaled[['PM10', 'CO', 'TEMP']].head())

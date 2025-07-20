@@ -6,7 +6,7 @@ import utils
 # --- KONFIGURASI HALAMAN ---
 st.set_page_config(page_title="Penghapusan Outlier", page_icon="🗑️", layout="wide")
 
-st.title("🗑️ Deteksi dan Penghapusan Outlier")
+st.title("🗑️ Penghapusan _Outlier_ dengan _Clustering_")
 st.markdown("""
 Outlier adalah titik data yang secara signifikan berbeda dari observasi lainnya. Kehadiran outlier dapat mengganggu kemampuan model untuk belajar, sehingga menghasilkan prediksi yang kurang akurat. 
 Tahap ini bertujuan untuk mengidentifikasi dan menghapus outlier menggunakan metode clustering untuk meningkatkan kekokohan model.

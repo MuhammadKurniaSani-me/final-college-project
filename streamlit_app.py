@@ -76,7 +76,7 @@ pg = st.navigation(
             st.Page("./pages/2_data_overview.py", title="Data Overview", icon=":material/table_chart:"),
             st.Page("./pages/3_data_preprocessing.py", title="Preprocessing", icon=":material/tune:"),
             st.Page("./pages/4_statistical_significance.py", title="Statistical Significance", icon=":material/functions:"),
-            st.Page("./pages/5_outlier_removal.py", title="Outlier Removal", icon=":material/filter_alt_off:"),
+            st.Page("./pages/5_outlier_removal.py", title="Clustering", icon=":material/filter_alt_off:"),
             st.Page("./pages/7_prediction.py", title="PM 2.5 Prediction", icon=":material/timeline:"),
             st.Page("./pages/8_conlusion.py", title="Conclusion", icon=":material/flag:"),
             # st.Page("./pages/9_scenario_4_evaluation.py", title="Scenario 4 Evaluation", icon=":material/filter_4:"),
