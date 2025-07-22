@@ -29,8 +29,8 @@ ALL_FEATURE_DESCRIPTIONS = {
     "PM2.5": "Konsentrasi partikel PM2.5 (µg/m³).", "PM10": "Konsentrasi partikel PM10 (µg/m³).",
     "SO2": "Konsentrasi SO₂ (µg/m³).", "NO2": "Konsentrasi NO₂ (µg/m³).", "CO": "Konsentrasi CO (µg/m³).",
     "O3": "Konsentrasi O₃ (µg/m³).", "TEMP": "Suhu (°C).", "PRES": "Tekanan atmosfer (hPa).",
-    "DEWP": "Suhu titik embun (°C).", "RAIN": "Curah hujan (mm).", "WD": "Arah mata angin.",
-    "WSPM": "Kecepatan angin (m/s).", "STATION": "Nama stasiun pemantauan."
+    "DEWP": "Suhu titik embun (°C).", "RAIN": "Curah hujan (mm).", "wd": "Arah mata angin.",
+    "WSPM": "Kecepatan angin (m/s).", "station": "Nama stasiun pemantauan."
 }
 
 # --- KONSTANTA PREPROCESSING ---
@@ -180,7 +180,7 @@ def create_correlation_plot(df):
 def create_timeseries_plot(df, y_col):
     """Membuat plot runtun waktu interaktif."""
     df_plot = df.copy()
-    fig = px.line(df_plot, x=df_plot.index, y=y_col, title=f'Tren Nilai {y_col} dari Waktu ke Waktu')
+    fig = px.line(df_plot, x=df_plot.index, y=y_col, title=f'Grafik Nilai {y_col} dari Waktu ke Waktu')
     fig.update_traces(line=dict(width=2, color='#1E90FF'))
     fig.update_layout(xaxis_title='Tanggal', yaxis_title=f'Nilai {y_col}', hovermode='x unified')
     return fig
@@ -428,7 +428,7 @@ def create_cluster_visualization(df_with_clusters):
     df_plot['silhouette_score'] = df_with_clusters['silhouette_score'].values
     
     fig = px.scatter(df_plot, x='PC1', y='PC2', color='cluster',
-                     title="Visualisasi Klaster (reduksi dimensi dengan PCA)",
+                     title="Visualisasi Cluster",
                      hover_data=['silhouette_score'],
                      color_continuous_scale=px.colors.qualitative.Vivid)
     fig.update_layout(xaxis_title="Principal Component 1", yaxis_title="Principal Component 2")

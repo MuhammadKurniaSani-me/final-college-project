@@ -8,8 +8,9 @@ st.set_page_config(page_title="Ikhtisar Data", page_icon="📊", layout="wide")
 
 st.title("📊 Ikhtisar dan Tinjauan Data")
 st.markdown("""
-Selamat datang di halaman ikhtisar data. Halaman ini adalah titik awal untuk memahami karakteristik dataset kualitas udara yang kita gunakan. Silakan pilih stasiun pemantauan untuk memulai eksplorasi.
+Selamat datang di halaman ikhtisar data. Halaman ini adalah titik awal untuk memahami karakteristik data _time series_ yang kita gunakan. Silakan pilih stasiun pemantauan untuk memulai eksplorasi.
 """)
+st.page_link("https://doi.org/10.1098/rspa.2017.0457", label="Zhang et al. (2017)", icon="🔗")
 
 # --- PEMILIHAN STASIUN & PEMUATAN DATA ---
 STATION_NAMES = [
@@ -36,27 +37,27 @@ if selected_station:
         # --- TAB 1: Tinjauan Umum ---
         with tab1:
             st.header("Tampilan Awal Data Mentah", divider="blue")
-            st.markdown("Berikut adalah 5 baris pertama dari dataset untuk memberikan gambaran tentang struktur dan jenis data yang ada.")
+            st.markdown("Berikut adalah 5 baris pertama dari data untuk memberikan gambaran tentang struktur dan jenis data yang ada.")
             st.dataframe(df.head())
-            st.info(f"Dataset untuk stasiun **{selected_station}** terdiri lebih dari **{df.shape[0]}** baris dan **{df.shape[1]}** kolom.")
+            st.info(f"Data untuk stasiun **{selected_station}** terdiri lebih dari **{df.shape[0]}** baris dan **{df.shape[1]}** kolom.")
 
             st.header("Deskripsi Setiap Fitur", divider="blue")
-            st.markdown("Tabel ini menjelaskan arti dari setiap kolom (fitur) dalam dataset.")
+            st.markdown("Tabel ini menjelaskan arti dari setiap kolom tabel (**_feature_**) dalam data.")
             descriptions = [(feat, utils.ALL_FEATURE_DESCRIPTIONS.get(feat, "N/A")) for feat in df.columns]
             st.dataframe(pd.DataFrame(descriptions, columns=["Fitur", "Deskripsi"]), use_container_width=True)
 
             st.header("Analisis Nilai yang Hilang (Missing Values)", divider="blue")
-            st.markdown("Grafik batang di bawah ini menunjukkan jumlah data yang hilang untuk setiap fitur. Fitur dengan batang yang tinggi memerlukan penanganan khusus (imputasi) sebelum dapat digunakan untuk pemodelan.")
+            st.markdown("Grafik batang di bawah ini menunjukkan jumlah data yang hilang (**_missing values_**) untuk setiap _feature_. Feature dengan batang yang tinggi memerlukan penanganan khusus (**_imputation_**) sebelum data di olah.")
             missing_plot = utils.create_missing_values_plot(df)
             if missing_plot:
                 st.pyplot(missing_plot)
             else:
-                st.success("🎉 Tidak ada nilai yang hilang pada dataset ini!")
+                st.success("🎉 Tidak ada nilai yang hilang pada data ini!")
 
         # --- TAB 2: Distribusi Fitur ---
         with tab2:
-            st.header("Tren Runtun Waktu PM2.5", divider="blue")
-            st.markdown("Visualisasi ini menunjukkan bagaimana nilai **PM2.5** (target prediksi kita) berubah dari waktu ke waktu. Ini membantu kita melihat adanya tren, musiman, atau anomali.")
+            st.header("_Timeseries_ PM2.5", divider="blue")
+            st.markdown("Visualisasi ini menunjukkan bagaimana nilai **PM2.5** (data yang akan diprediksi) dari waktu ke waktu. Ini membantu kita melihat adanya kenaikan atau penurunan, musiman, atau anomali (**_outlier_**).")
             timeseries_plot = utils.create_timeseries_plot(df, 'PM2.5')
             st.plotly_chart(timeseries_plot, use_container_width=True)
             
@@ -71,9 +72,9 @@ if selected_station:
 
         # --- TAB 3: Hubungan Antar Fitur ---
         with tab3:
-            st.header("Heatmap Korelasi Antar Fitur", divider="blue")
+            st.header("_Heatmap_ Korelasi Antar Fitur", divider="blue")
             st.markdown("""
-            Heatmap ini mengukur kekuatan hubungan linear antara setiap pasang fitur. Arahkan kursor ke sebuah kotak untuk melihat nilai pastinya.
+            _Heatmap_ ini mengukur kekuatan hubungan linear antara setiap pasang fitur. Arahkan kursor ke sebuah kotak untuk melihat nilai pastinya.
             - **Warna Biru Tua (mendekati +1):** Menunjukkan korelasi positif yang kuat (jika satu naik, yang lain cenderung naik).
             - **Warna Merah Tua (mendekati -1):** Menunjukkan korelasi negatif yang kuat (jika satu naik, yang lain cenderung turun).
             - **Warna Terang (mendekati 0):** Menunjukkan hubungan linear yang lemah.
@@ -81,21 +82,6 @@ if selected_station:
             # Asumsikan Anda memiliki fungsi create_correlation_plot_plotly di utils.py
             corr_plot = utils.create_correlation_plot(df) # Menggunakan versi Seaborn/matplotlib
             st.pyplot(corr_plot)
-
-            # st.header("Eksplorasi Hubungan dengan Scatter Plot", divider="blue")
-            # st.markdown("Pilih dua fitur untuk memvisualisasikan hubungan mereka secara lebih detail. Garis merah menunjukkan tren hubungan linear (regresi).")
-            
-            # col1, col2 = st.columns(2)
-            # with col1:
-            #     x_axis = st.selectbox("Pilih Fitur untuk Sumbu X:", df.columns, index=list(df.columns).index('PM2.5'))
-            # with col2:
-            #     y_axis = st.selectbox("Pilih Fitur untuk Sumbu Y:", df.columns, index=list(df.columns).index('PM10'))
-            
-            # # Asumsikan Anda memiliki fungsi create_scatter_plot di utils.py
-            # # scatter_plot = utils.create_scatter_plot(df, x_axis, y_axis)
-            # # st.plotly_chart(scatter_plot, use_container_width=True)
-            # st.info("Fungsi untuk scatter plot belum diimplementasikan di utils.py.")
-
 
 else:
     st.info("Silakan pilih stasiun untuk melanjutkan.")

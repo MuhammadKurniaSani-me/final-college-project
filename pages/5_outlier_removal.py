@@ -6,14 +6,15 @@ import utils
 # --- KONFIGURASI HALAMAN ---
 st.set_page_config(page_title="Penghapusan Outlier", page_icon="🗑️", layout="wide")
 
-st.title("🗑️ Penghapusan _Outlier_ dengan _Clustering_")
+st.title("🗑️ _Clustering_ untuk Menghapus _Outlier_")
 st.markdown("""
-Outlier adalah titik data yang secara signifikan berbeda dari observasi lainnya. Kehadiran outlier dapat mengganggu kemampuan model untuk belajar, sehingga menghasilkan prediksi yang kurang akurat. 
-Tahap ini bertujuan untuk mengidentifikasi dan menghapus outlier menggunakan metode clustering untuk meningkatkan kekokohan model.
+_Outlier_ adalah data yang secara signifikan berbeda dari data lainnya. Kehadiran _outlier_ dapat mengganggu kemampuan prediksi, sehingga menghasilkan prediksi yang kurang akurat. 
+Tahap ini bertujuan untuk mengidentifikasi dan menghapus _outlier_ menggunakan metode _clustering_ untuk meningkatkan akurasi prediksi.
 """)
+st.page_link("https://doi.org/10.1016/j.heliyon.2023.e13483", label="Ilu et al. (2021)", icon="🔗")
 
 st.info("""
-**Metodologi:** Kita menggunakan algoritma **K-Means dengan Mahalanobis Distance**. Ide dasarnya adalah mengelompokkan semua titik data ke dalam beberapa klaster. Titik data yang berada sangat jauh dari pusat klasternya sendiri (memiliki *silhouette score* rendah) dianggap sebagai outlier.
+**Metodologi:** Kita menggunakan algoritma **K-Means dengan perhitungan jarak Mahalanobis**. Ide dasarnya adalah mengelompokkan semua titik data ke dalam beberapa _cluster_. Titik data yang berada sangat jauh dari pusat _cluster_-nya sendiri (memiliki *silhouette score* rendah) dianggap sebagai outlier.
 """, icon="💡")
 
 
@@ -33,13 +34,13 @@ df_for_clustering = df_scaled[['PM2.5'] + final_features]
 st.sidebar.header("⚙️ Kontrol Analisis Outlier")
 k_range = st.sidebar.slider("Rentang 'k' untuk diuji:", min_value=2, max_value=15, value=10, help="Jumlah maksimum klaster yang akan diuji untuk menemukan k optimal.")
 k_optimal = st.sidebar.number_input("Pilih 'k' Optimal:", min_value=2, max_value=k_range, value=2, help="Masukkan nilai 'k' yang Anda anggap terbaik berdasarkan grafik di bawah.")
-silhouette_threshold = st.sidebar.slider("Ambang Batas Silhouette Score:", min_value=-0.5, max_value=0.5, value=0.1, step=0.05, help="Data dengan skor di bawah ini akan dianggap sebagai outlier. Nilai mendekati 0 atau negatif menunjukkan outlier.")
+silhouette_threshold = st.sidebar.slider("Ambang Batas _Silhouette Score_:", min_value=-0.5, max_value=0.5, value=0.1, step=0.05, help="Data dengan skor di bawah ini akan dianggap sebagai outlier. Nilai mendekati 0 atau negatif menunjukkan outlier.")
 
 # --- TAHAP 1: MENEMUKAN K OPTIMAL ---
-st.header("Tahap 1: Menentukan Jumlah Klaster (k) Optimal", divider="blue")
-st.markdown("Langkah pertama adalah menemukan jumlah klaster (`k`) yang paling alami untuk data kita. Kita menggunakan dua metode visual untuk membantu keputusan ini.")
+st.header("Tahap 1: Menentukan Jumlah _Cluster_ (k) Optimal", divider="blue")
+st.markdown("Langkah pertama adalah menemukan jumlah _cluster_ (`k`) yang paling cocok untuk data kita. Kita menggunakan dua metode visual dari grafik _Elbow_ & grafik _Silhouette_ untuk membantu keputusan ini.")
 
-if st.button("Jalankan Analisis Klaster (Mahalanobis)", type="primary"):
+if st.button("Jalankan Analisis _Cluster_", type="primary"):
     with st.spinner("Menjalankan K-Means untuk setiap k..."):
         sse_scores, silhouette_scores = utils.run_clustering_analysis(df_for_clustering, k_range)
         st.session_state.sse_scores = sse_scores
@@ -49,12 +50,12 @@ if 'sse_scores' in st.session_state:
     col1, col2 = st.columns(2)
     with col1:
         st.subheader("Elbow Method")
-        st.markdown("Cari titik di mana penurunan grafik mulai melandai, membentuk 'siku' (elbow). Ini adalah kandidat `k` yang baik.")
+        st.markdown("Cari titik di mana penurunan grafik mulai melandai, membentuk 'siku' (_elbow_). Ini adalah kandidat `k` yang baik.")
         elbow_plot = utils.create_elbow_plot(st.session_state.sse_scores)
         st.plotly_chart(elbow_plot, use_container_width=True)
     with col2:
         st.subheader("Silhouette Score Plot")
-        st.markdown("Cari nilai `k` yang memberikan skor silhouette tertinggi. Skor yang lebih tinggi menunjukkan klaster yang lebih padat dan terpisah dengan baik.")
+        st.markdown("Cari nilai `k` yang memberikan skor _silhouette_ tertinggi. Skor yang lebih tinggi menunjukkan _cluster_ yang lebih padat dan terpisah dengan baik.")
         sil_plot = utils.create_silhouette_plot(st.session_state.silhouette_scores)
         st.plotly_chart(sil_plot, use_container_width=True)
 
@@ -67,20 +68,20 @@ if st.session_state.get('sse_scores'): # Hanya tampilkan jika analisis sudah dij
     
     col1, col2 = st.columns([2, 1])
     with col1:
-        st.subheader("Visualisasi Klaster")
-        st.markdown("Data direduksi menjadi 2 dimensi menggunakan PCA untuk visualisasi. Setiap warna mewakili satu klaster. Titik data yang ideal seharusnya berkelompok dengan warna yang sama.")
+        st.subheader("Visualisasi _Cluster_")
+        st.markdown(f"Cluster data divisualisasikan menjadi {k_optimal} _cluster_. Setiap warna mewakili satu klaster. Titik data yang ideal seharusnya berkelompok dengan warna yang sama.")
         cluster_plot = utils.create_cluster_visualization(df_with_clusters)
         st.plotly_chart(cluster_plot, use_container_width=True)
     with col2:
         st.subheader("Ringkasan Hasil")
-        st.markdown("Berdasarkan parameter yang Anda pilih, berikut adalah ringkasan proses penghapusan outlier.")
+        st.markdown("Berdasarkan parameter yang Anda pilih, berikut adalah ringkasan proses penghapusan _outlier_.")
         st.metric("Total Data Dianalisis", f"{len(df_with_clusters)} baris")
-        st.metric("Jumlah Outlier Ditemukan", f"{len(df_outliers)} baris", delta=f"-{len(df_outliers)}", delta_color="inverse")
-        st.metric("Data Bersih (Inliers)", f"{len(df_cleaned)} baris")
+        st.metric("Jumlah _Outlier_ Ditemukan", f"{len(df_outliers)} baris", delta=f"-{len(df_outliers)}", delta_color="inverse")
+        st.metric("Data Bersih (_Inliers_)", f"{len(df_cleaned)} baris")
 
-    st.subheader(f"Tabel Data yang Diidentifikasi sebagai Outlier (Silhouette Score ≤ {silhouette_threshold})")
+    st.subheader(f"Tabel Data yang Diidentifikasi sebagai _outlier_ (Silhouette Score ≤ {silhouette_threshold})")
     if df_outliers.empty:
-        st.success("Tidak ada outlier yang ditemukan dengan ambang batas saat ini.")
+        st.success("Tidak ada _outlier_ yang ditemukan dengan ambang batas saat ini.")
     else:
         st.dataframe(df_outliers)
     
