@@ -241,8 +241,12 @@ def preprocess_impute(df):
 def preprocess_scale(df):
     """Menskalakan data menggunakan MinMaxScaler dari Scikit-learn."""
     # MinMaxScaler is the standard and most efficient way to perform this normalization.
+    df_scaled = df.copy()
+    # 1. Pilih hanya kolom bertipe numerik
+    numeric_cols = df_scaled.select_dtypes(include=['number']).columns
+    
     scaler = MinMaxScaler()
-    df_scaled = pd.DataFrame(scaler.fit_transform(df), index=df.index, columns=df.columns)
+    df_scaled[numeric_cols] = scaler.fit_transform(df_scaled[numeric_cols])
     return df_scaled, scaler
 
 
