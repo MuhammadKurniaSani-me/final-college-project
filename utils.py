@@ -219,7 +219,23 @@ def preprocess_impute(df):
     """Mengisi nilai yang hilang menggunakan interpolasi linear."""
     # Pandas' interpolate function is highly optimized, fast, and reliable.
     # It replaces all the custom linear imputation logic in one line.
-    df_imputed = df.interpolate(method='linear', limit_direction='both', axis=0)
+    
+    df_imputed = df.copy()
+    # 1. Pilih hanya kolom numerik untuk diinterpolasi
+    numeric_cols = df_imputed.select_dtypes(include=['number']).columns
+    
+    # 2. Lakukan interpolasi hanya pada kolom numerik
+    df_imputed[numeric_cols] = df_imputed[numeric_cols].interpolate(
+        method='linear', 
+        limit_direction='both', 
+        axis=0
+    )
+    
+    # 3. Untuk kolom kategorikal/non-numerik (jika ada nilai NaN), gunakan bfill / ffill
+    non_numeric_cols = df_imputed.select_dtypes(exclude=['number']).columns
+    if len(non_numeric_cols) > 0:
+        df_imputed[non_numeric_cols] = df_imputed[non_numeric_cols].bfill().ffill()
+        
     return df_imputed
 
 def preprocess_scale(df):
