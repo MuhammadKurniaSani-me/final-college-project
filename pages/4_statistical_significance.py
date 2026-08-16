@@ -37,7 +37,10 @@ vif_threshold = st.sidebar.slider(
 )
 
 # --- Proses Seleksi Fitur Sekuensial ---
-corr_matrix = df_scaled.corr(method='pearson')
+# Pastikan hanya memproses kolom numerik
+df_numeric = df_scaled.select_dtypes(include=['number'])
+
+corr_matrix = df_numeric.corr(method='pearson')
 corr_with_target = corr_matrix['PM2.5'].abs().drop('PM2.5')
 features_passed_corr = corr_with_target[corr_with_target >= corr_threshold].index.tolist()
 features_failed_corr = corr_with_target[corr_with_target < corr_threshold].index.tolist()
